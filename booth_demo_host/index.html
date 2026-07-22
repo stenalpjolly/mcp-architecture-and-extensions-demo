@@ -14,34 +14,39 @@
            Palette: 60% Canvas (#090d16), 30% Surface (#0f172a / #1e293b), 10% Accent (#38bdf8 / #10b981)
            ========================================================================== */
         :root {
-            --bg-canvas: #070a12;
-            --bg-surface-l1: #0d1322;
-            --bg-surface-l2: #141c30;
-            --bg-surface-l3: #1c2742;
+            --bg-canvas: #131314;
+            --bg-surface-l1: #1e1f20;
+            --bg-surface-l2: #282a2c;
+            --bg-surface-l3: #3c4043;
             
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-medium: rgba(255, 255, 255, 0.14);
-            --border-accent: rgba(56, 189, 248, 0.35);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --border-medium: rgba(255, 255, 255, 0.18);
+            --border-accent: rgba(138, 180, 248, 0.4);
 
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
+            --text-primary: #e3e3e3;
+            --text-secondary: #c4c7c5;
+            --text-muted: #8e918f;
 
-            --accent-primary: #38bdf8;
-            --accent-primary-hover: #0284c7;
-            --accent-success: #10b981;
-            --accent-warning: #f59e0b;
-            --accent-danger: #f43f5e;
+            --google-blue: #4285f4;
+            --google-red: #ea4335;
+            --google-yellow: #fbbc05;
+            --google-green: #34a853;
+
+            --accent-primary: #8ab4f8;
+            --accent-primary-hover: #4285f4;
+            --accent-success: #81c995;
+            --accent-warning: #fdd663;
+            --accent-danger: #f28b82;
 
             --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
 
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
 
             --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --shadow-subtle: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --shadow-subtle: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,15 +88,15 @@
         .brand-logo {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, var(--accent-primary), #818cf8);
+            background: linear-gradient(135deg, #4285f4 0%, #ea4335 33%, #fbbc05 66%, #34a853 100%);
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #000;
+            color: #ffffff;
             font-weight: 800;
             font-size: 16px;
-            box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 16px rgba(66, 133, 244, 0.35);
         }
 
         .brand-title {
