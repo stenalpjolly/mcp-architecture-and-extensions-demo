@@ -43,23 +43,24 @@ sequenceDiagram
     participant Tools as Pure Functions
 
     Note over Client,Server: Phase 1: Protocol Session Handshake
-    Client->>Server: 1. Request: "initialize" (clientInfo: { name: "DemoClientHost", version: "1.0.0" })
-    Server-->>Client: 2. Response: "InitializeResult"
-    Client->>Server: 3. Notification: "notifications/initialized" (Session State -> ACTIVE)
+    Client->>Server: Request initialize with clientInfo
+    Server-->>Client: Response InitializeResult
+    Client->>Server: Notification notifications/initialized
+    Note over Server: Session State transitions to ACTIVE
 
     Note over Client,Server: Phase 2: Protocol Discovery
-    Client->>Server: 4. Request: "resources/list" & "tools/list"
-    Server-->>Client: 5. Response: Pure Functional Tool Schemas
+    Client->>Server: Request resources/list & tools/list
+    Server-->>Client: Response Pure Functional Tool Schemas
 
     Note over Client,Server: Phase 3: Pure Functional Execution
-    Client->>Server: 6. Request: tools/call "add_numbers" (a=15.5, b=24.5)
-    Server->>Tools: 7. Execute add_numbers(15.5, 24.5)
-    Tools-->>Server: 8. Return 40.0
-    Server-->>Client: 9. Response Payload (40.0)
+    Client->>Server: Request tools/call add_numbers
+    Server->>Tools: Execute add_numbers
+    Tools-->>Server: Return 40.0
+    Server-->>Client: Response Payload 40.0
 
     Note over Client,Server: Phase 4: Idempotency Verification
-    Client->>Server: 10. Call "add_numbers" (a=10, b=20) 3 Consecutive Times
-    Server-->>Client: 11. Identical Output (30.0) with Zero State Drift
+    Client->>Server: Request tools/call add_numbers
+    Server-->>Client: Identical Response Payload 40.0
 ```
 
 ---

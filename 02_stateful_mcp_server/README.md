@@ -66,29 +66,30 @@ sequenceDiagram
     participant Session as Active Session Context
 
     Note over Client,Server: Phase 1: Session Handshake
-    Client->>Server: 1. Request: "initialize" (clientInfo: { name: "DemoClientHost", version: "1.0.0" })
-    Server-->>Client: 2. Response: "InitializeResult" (capabilities: listChanged=True)
-    Client->>Server: 3. Notification: "notifications/initialized" (Session -> ACTIVE)
+    Client->>Server: Request initialize with clientInfo
+    Server-->>Client: Response InitializeResult with listChanged capabilities
+    Client->>Server: Notification notifications/initialized
 
     Note over Client,Server: Phase 2: Schema Discovery
-    Client->>Server: 4. Request: "resources/list" & "tools/list"
-    Server-->>Client: 5. Response: Initial 5 Tools (Without admin_system_diagnostics)
+    Client->>Server: Request resources/list & tools/list
+    Server-->>Client: Response Initial Tools List
 
     Note over Client,Server: Phase 3: Progress & Log Streaming
-    Client->>Server: 6. Call Tool "bulk_import_sample_notes"(count=3)
-    Server-->>Client: 7. Stream Log Notification ("Starting import...")
-    Server-->>Client: 8. Stream Progress Notification (1 / 3)
-    Server-->>Client: 9. Stream Progress Notification (2 / 3)
-    Server-->>Client: 10. Stream Progress Notification (3 / 3)
-    Server-->>Client: 11. Return Tool Result
+    Client->>Server: Call Tool bulk_import_sample_notes
+    Server-->>Client: Stream Log Notification Starting import
+    Server-->>Client: Stream Progress Notification 1 of 3
+    Server-->>Client: Stream Progress Notification 2 of 3
+    Server-->>Client: Stream Progress Notification 3 of 3
+    Server-->>Client: Return Tool Result
 
     Note over Client,Server: Phase 4: Dynamic Tool Schema Mutation
-    Client->>Server: 12. Call Tool "toggle_admin_mode"(enable=True)
-    Server->>Session: 13. Register "admin_system_diagnostics" tool on the fly
-    Server-->>Client: 14. Push Notification ("notifications/message")
-    Client->>Server: 15. Re-List Available Tools -> Reflects 6 tools (Includes 'admin_system_diagnostics'!)
-    Client->>Server: 16. Execute 'admin_system_diagnostics'
-    Server-->>Client: 17. Return Admin Output
+    Client->>Server: Call Tool toggle_admin_mode
+    Server->>Session: Register admin_system_diagnostics tool on the fly
+    Server-->>Client: Push Notification notifications/tools/list_changed
+    Client->>Server: Re-List Available Tools
+    Server-->>Client: Response Updated Tools List
+    Client->>Server: Execute 'admin_system_diagnostics'
+    Server-->>Client: Return Admin Output
 ```
 
 ---

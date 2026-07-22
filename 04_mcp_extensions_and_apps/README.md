@@ -36,23 +36,23 @@ sequenceDiagram
     participant Worker as Background Task Worker
 
     Note over Client,Server: Extension 1: Formal MCP Apps Standard (ui://)
-    Client->>Server: 1. tools/call "launch_analytics_app"
-    Server-->>Client: 2. Return CallToolResult (mime_type: "text/html;profile=mcp-app", app_uri: "ui://analytics_app")
+    Client->>Server: tools/call launch_analytics_app
+    Server-->>Client: Return CallToolResult with text/html;profile=mcp-app
     Note over Client: Host renders embedded HTML/JS iframe widget
 
     Note over Client,Server: Extension 2: Human-in-the-Loop Elicitation
-    Client->>Server: 3. tools/call "transfer_funds_with_approval" ($15,000)
-    Server-->>Client: 4. Elicitation Request: "Do you authorize transfer of $15,000?"
-    Client-->>Server: 5. Elicitation Response: Human Operator Approves
-    Server-->>Client: 6. Execution Result (Transaction Confirmed)
+    Client->>Server: tools/call transfer_funds_with_approval
+    Server-->>Client: Elicitation Request: Do you authorize transfer?
+    Client-->>Server: Elicitation Response: Human Operator Approves
+    Server-->>Client: Execution Result Transaction Confirmed
 
     Note over Client,Server: Extension 3: Background Tasks
-    Client->>Server: 7. tools/call "start_background_export_task"
-    Server->>Worker: 8. Spawn background worker process
-    Server-->>Client: 9. Immediate Response: { task_id: "task_c2d34a4d", status: "RUNNING" }
-    Worker-->>Client: 10. Stream Progress Notifications (1666/5000 -> 5000/5000)
-    Client->>Server: 11. tools/call "get_task_status"("task_c2d34a4d")
-    Server-->>Client: 12. Response: { status: "COMPLETED" }
+    Client->>Server: tools/call start_background_export_task
+    Server->>Worker: Spawn background worker process
+    Server-->>Client: Immediate Response with task_id and RUNNING status
+    Worker-->>Client: Stream Progress Notifications
+    Client->>Server: tools/call get_task_status
+    Server-->>Client: Response COMPLETED status
 ```
 
 ---

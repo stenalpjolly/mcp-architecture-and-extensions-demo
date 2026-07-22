@@ -23,22 +23,19 @@ The **MCP Booth Demo Host Application** is a web-based client host dashboard bui
 sequenceDiagram
     autonumber
     actor Presenter as Booth Presenter / Web UI
-    participant Host as Web Host App (http://127.0.0.1:8000)
-    participant S1 as Stateless Server (Port 8001)
-    participant S2 as Connection Stateful Server (Port 8002)
-    participant S3 as _meta Metadata Server (Port 8003)
-    participant S4 as MCP Apps & Extensions Server (Port 8004)
+    participant Host as Web Host App
+    participant S4 as MCP Apps & Extensions Server
 
-    Presenter->>Host: 1. Select Server in Dropdown & Click "Connect Host RPC"
-    Host->>S4: 2. Establish SSE Connection (GET http://127.0.0.1:8004/sse)
-    S4-->>Host: 3. Return Message Endpoint URI
-    Host->>S4: 4. Send "initialize" Request (POST /messages/)
-    S4-->>Host: 5. Return InitializeResult with capabilities
-    Host->>S4: 6. Send "notifications/initialized"
-    Host->>S4: 7. Perform Discovery Phase (tools/list, resources/list, prompts/list)
-    Presenter->>Host: 8. Execute "launch_analytics_app" with _meta Context
-    Host->>S4: 9. tools/call with params & _meta
-    S4-->>Host: 10. Return EmbeddedResource (mimeType: "text/html;profile=mcp-app")
+    Presenter->>Host: Select Server in Dropdown & Click Connect Host RPC
+    Host->>S4: Establish SSE Connection (GET /sse)
+    S4-->>Host: Return Message Endpoint URI
+    Host->>S4: Send "initialize" Request
+    S4-->>Host: Return InitializeResult with capabilities
+    Host->>S4: Send "notifications/initialized"
+    Host->>S4: Perform Discovery Phase (tools/list, resources/list)
+    Presenter->>Host: Execute "launch_analytics_app" with _meta Context
+    Host->>S4: tools/call with params & _meta
+    S4-->>Host: Return EmbeddedResource with text/html;profile=mcp-app
     Note over Host: Host renders interactive web widget inside iframe container
 ```
 

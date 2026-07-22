@@ -45,23 +45,23 @@ sequenceDiagram
     participant DB as Multi-Tenant DB
 
     Note over Client,Server: Phase 1: Protocol Handshake
-    Client->>Server: 1. Request: "initialize" (clientInfo: { name: "DemoClientHost", version: "1.0.0" })
-    Server-->>Client: 2. Response: "InitializeResult" (serverInfo, capabilities)
-    Client->>Server: 3. Notification: "notifications/initialized" (Session State -> ACTIVE)
+    Client->>Server: Request initialize with clientInfo
+    Server-->>Client: Response InitializeResult with serverInfo
+    Client->>Server: Notification notifications/initialized
 
     Note over Client,Server: Phase 2: Protocol Discovery
-    Client->>Server: 4. Request: "tools/list" & "resources/list"
-    Server-->>Client: 5. Response: Published Tool Schemas (Clean inputSchema without credentials)
+    Client->>Server: Request tools/list & resources/list
+    Server-->>Client: Response Published Tool Schemas
 
     Note over Client,Server: Phase 3: Out-of-Band _meta Request Execution
-    Client->>Server: 6. tools/call { name: "execute_tenant_query", arguments: { query_category: "invoices" }, _meta: { tenant_id: "tenant_acme_corp", trace_id: "tr_db_4402b" } }
+    Client->>Server: tools/call execute_tenant_query with _meta context
     
     Note over Server: Server inspects ctx.request_context.meta
-    Server->>DB: 7. Query tenant_acme_corp isolated records
-    DB-->>Server: 8. Return isolated tenant data
+    Server->>DB: Query tenant_acme_corp isolated records
+    DB-->>Server: Return isolated tenant data
     
-    Server-->>Client: 9. Stream Notification: notifications/message "[_meta Trace tr_db_4402b] Query Executed"
-    Server-->>Client: 10. Response Payload (CallToolResult)
+    Server-->>Client: Stream Notification notifications/message with trace_id
+    Server-->>Client: Response Payload CallToolResult
 ```
 
 ---
