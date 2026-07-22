@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Booth Demo Host Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --accent-cyan: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-magenta: #c084fc;
+            --accent-yellow: #facc15;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Top Header */
+        header { background: #020617; border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .logo-title { display: flex; align-items: center; gap: 12px; }
+        .logo-title h1 { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .server-controls { display: flex; align-items: center; gap: 12px; }
+        select, input, button { font-family: inherit; font-size: 0.9rem; border-radius: 6px; outline: none; }
+        select, input[type="text"] { background: #090d16; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; }
+        
+        .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; color: white; border: none; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+
+        .status-badge { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; background: #334155; color: var(--text-dim); }
+        .status-connected { background: #065f46; color: #34d399; }
+        .status-disconnected { background: #7f1d1d; color: #f87171; }
+
+        /* Main Workspace Grid */
+        main { display: grid; grid-template-columns: 320px 1fr 450px; flex: 1; overflow: hidden; background: #020617; }
+        
+        .panel { background: var(--panel-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 12px 16px; background: #182234; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+        .panel-content { padding: 16px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+
+        /* Form elements */
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; }
+        textarea { background: #090d16; color: var(--accent-cyan); border: 1px solid var(--border-color); padding: 10px; font-family: monospace; font-size: 0.85rem; border-radius: 6px; resize: vertical; min-height: 90px; }
+
+        /* Meta Checkbox */
+        .meta-toggle { background: #090d16; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .meta-toggle-header { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--accent-yellow); }
+
+        /* MCP App Webview Frame */
+        .mcp-app-container { width: 100%; height: 340px; border: 2px dashed var(--accent-magenta); border-radius: 8px; background: #090d16; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .app-placeholder { color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px; }
+
+        /* Live Terminal Log Stream */
+        .terminal { background: #020617; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.82rem; padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .log-req { color: var(--accent-cyan); }
+        .log-res { color: var(--accent-green); }
+        .log-stream { color: var(--accent-magenta); }
+        .log-err { color: #f87171; }
+        .log-info { color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <span>📡</span>
+            <h1>MCP Booth Demo Host Dashboard</h1>
+            <span class="status-badge" id="connBadge">Disconnected</span>
+        </div>
+
+        <div class="server-controls">
+            <select id="serverSelect">
+                <option value="http://127.0.0.1:8001">⚡ Demo 1: Stateless MCP Server (Port 8001)</option>
+                <option value="http://127.0.0.1:8002" selected>📡 Demo 2: Option 1 Protocol Connection Stateful Server (Port 8002)</option>
+                <option value="http://127.0.0.1:8003">🔐 Demo 3: Out-of-Band _meta Request Metadata Server (Port 8003)</option>
+                <option value="http://127.0.0.1:8004">🚀 Demo 4: Modern Extensions & Formal MCP Apps Server (Port 8004)</option>
+            </select>
+            <button class="btn-primary" id="btnConnect" onclick="toggleConnect()">Connect Host RPC</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Panel 1: Server Capabilities & Registry Inspector -->
+        <section class="panel">
+            <div class="panel-header">
+                <span>📋 Capabilities & Registry</span>
+                <button style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;" onclick="refreshRegistry()">🔄</button>
+            </div>
+            <div class="panel-content">
+                <div class="form-group">
+                    <label>Server Info & Capabilities</label>
+                    <textarea id="txtCapabilities" readonly style="height: 140px; color: var(--text-main);"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Discovered Tools (<span id="lblToolCount">0</span>)</label>
+                    <select id="selectTools" size="5" onchange="onToolSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Discovered Resources (<span id="lblResourceCount">0</span>)</label>
+                    <select id="selectResources" size="4" onchange="onResourceSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel 2: Interactive RPC Execution & MCP App Frame -->
+        <section class="panel" style="border-right: 1px solid var(--border-color);">
+            <div class="panel-header">
+                <span>⚡ RPC Execution & MCP App Container</span>
+            </div>
+            <div class="panel-content">
+                
+                <!-- RPC Execution Configurator -->
+                <div class="form-group">
+                    <label>Tool Arguments JSON (`arguments`)</label>
+                    <textarea id="txtArguments">{\n  "count": 3\n}</textarea>
+                </div>
+
+                <!-- Out-of-Band _meta Configuration -->
+                <div class="meta-toggle">
+                    <div class="meta-toggle-header">
+                        <input type="checkbox" id="chkUseMeta" checked>
+                        <span>Inject Out-of-Band `_meta` Request Parameters</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                        <input type="text" id="metaClientId" value="client_booth_demo_99" placeholder="client_id">
+                        <input type="text" id="metaUserId" value="user_stenalp_42" placeholder="user_id">
+                        <input type="text" id="metaTenantId" value="tenant_acme_corp" placeholder="tenant_id">
+                        <input type="text" id="metaTraceId" value="tr_booth_7701a" placeholder="trace_id">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-primary" style="flex:1;" onclick="executeSelectedTool()">Execute Tool RPC (`tools/call`)</button>
+                    <button class="btn-primary" style="background:#059669;" onclick="readSelectedResource()">Read Resource (`resources/read`)</button>
+                </div>
+
+                <!-- MCP App Webview Frame Container -->
+                <div class="form-group" style="margin-top: 10px;">
+                    <label style="color: var(--accent-magenta);">🖥️ Embedded MCP App Webview Container (`ui://` Frame)</label>
+                    <div class="mcp-app-container" id="appContainer">
+                        <div class="app-placeholder" id="appPlaceholder">
+                            ✨ Select an MCP App resource (e.g. <code>ui://analytics_app</code> or call <code>launch_analytics_app</code>) to render the interactive widget.
+                        </div>
+                        <iframe id="appIframe" style="display:none;"></iframe>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Panel 3: Real-Time JSON-RPC Stream Inspector -->
+        <section class="panel" style="border-right: none;">
+            <div class="panel-header">
+                <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
+                <button style="background:none;border:none;color:var(--text-dim);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
+            </div>
+            <div class="panel-content" style="padding:0;">
+                <div class="terminal" id="terminalLog">
+                    <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let eventSource = null;
+        let messageEndpoint = null;
+        let requestId = 1;
+        let discoveredTools = [];
+        let discoveredResources = [];
+
+        function appendLog(type, title, payload) {
+            const term = document.getElementById('terminalLog');
+            const entry = document.createElement('div');
+            entry.className = type;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let jsonStr = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
+            entry.innerHTML = `<div><strong>[${timestamp}] ${title}:</strong></div><pre style="white-space:pre-wrap;margin-top:4px;">${jsonStr}</pre>`;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('terminalLog').innerHTML = '';
+        }
+
+        async function toggleConnect() {
+            if (eventSource) {
+                disconnect();
+            } else {
+                connect();
+            }
+        }
+
+        function connect() {
+            const serverUrl = document.getElementById('serverSelect').value;
+            const sseUrl = `${serverUrl}/sse`;
+            
+            appendLog('log-info', 'INITIATING SSE TRANSPORT', `Connecting to ${sseUrl}...`);
+            
+            eventSource = new EventSource(sseUrl);
+
+            eventSource.onopen = () => {
+                document.getElementById('connBadge').innerText = 'Connected';
+                document.getElementById('connBadge').className = 'status-badge status-connected';
+                document.getElementById('btnConnect').innerText = 'Disconnect';
+                document.getElementById('btnConnect').className = 'btn-danger';
+            };
+
+            eventSource.onerror = (err) => {
+                appendLog('log-err', 'SSE TRANSPORT ERROR', err);
+                disconnect();
+            };
+
+            eventSource.addEventListener('endpoint', (e) => {
+                const endpointUri = e.data;
+                messageEndpoint = endpointUri.startsWith('http') ? endpointUri : `${serverUrl}${endpointUri}`;
+                appendLog('log-stream', '📡 SSE ENDPOINT RECEIVED', `Message Endpoint: ${messageEndpoint}`);
+                
+                // Perform Protocol Handshake Sequence
+                performProtocolHandshake();
+            });
+
+            eventSource.addEventListener('message', (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    appendLog('log-stream', '📡 ASYNC SSE NOTIFICATION STREAM', data);
+                    
+                    // Handle dynamic tool schema change notification
+                    if (data.method === 'notifications/tools/list_changed') {
+                        appendLog('log-info', '✨ DYNAMIC SCHEMA MUTATION DETECTED', 'Re-querying tools/list...');
+                        fetchToolsList();
+                    }
+                } catch (err) {
+                    appendLog('log-stream', '📡 ASYNC RAW SSE STREAM', e.data);
+                }
+            });
+        }
+
+        function disconnect() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            messageEndpoint = null;
+            document.getElementById('connBadge').innerText = 'Disconnected';
+            document.getElementById('connBadge').className = 'status-badge status-disconnected';
+            document.getElementById('btnConnect').innerText = 'Connect Host RPC';
+            document.getElementById('btnConnect').className = 'btn-primary';
+            appendLog('log-info', 'SESSION TERMINATED', 'Disconnected from MCP server.');
+        }
+
+        async function sendRpcRequest(method, params = {}) {
+            if (!messageEndpoint) {
+                alert('Please connect to an MCP Server first!');
+                return null;
+            }
+
+            const currentId = requestId++;
+            const payload = {
+                jsonrpc: '2.0',
+                id: currentId,
+                method: method,
+                params: params
+            };
+
+            appendLog('log-req', '📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD', payload);
+
+            try {
+                const response = await fetch(messageEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const resText = await response.text();
+                if (resText) {
+                    const resJson = JSON.parse(resText);
+                    appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD', resJson);
+                    return resJson;
+                }
+            } catch (err) {
+                appendLog('log-err', 'RPC TRANSPORT FAILURE', err.toString());
+            }
+            return null;
+        }
+
+        async function performProtocolHandshake() {
+            // 1. Send initialize
+            const initRes = await sendRpcRequest('initialize', {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: { name: 'MCPBoothDemoHost', version: '1.0.0' }
+            });
+
+            if (initRes && initRes.result) {
+                document.getElementById('txtCapabilities').value = JSON.stringify(initRes.result.capabilities, null, 2);
+                
+                // 2. Send notifications/initialized
+                const initNotifyPayload = { jsonrpc: '2.0', method: 'notifications/initialized' };
+                appendLog('log-stream', '📡 JSON-RPC INITIALIZED SIGNAL', initNotifyPayload);
+                await fetch(messageEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(initNotifyPayload)
+                });
+
+                // 3. Discovery Phase
+                await refreshRegistry();
+            }
+        }
+
+        async function refreshRegistry() {
+            await fetchToolsList();
+            await fetchResourcesList();
+        }
+
+        async function fetchToolsList() {
+            const res = await sendRpcRequest('tools/list', {});
+            if (res && res.result && res.result.tools) {
+                discoveredTools = res.result.tools;
+                const select = document.getElementById('selectTools');
+                select.innerHTML = '';
+                document.getElementById('lblToolCount').innerText = discoveredTools.length;
+
+                discoveredTools.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.name;
+                    opt.innerText = `${t.name} - ${t.description || ''}`;
+                    select.appendChild(opt);
+                });
+
+                if (discoveredTools.length > 0) {
+                    select.selectedIndex = 0;
+                    onToolSelected();
+                }
+            }
+        }
+
+        async function fetchResourcesList() {
+            const res = await sendRpcRequest('resources/list', {});
+            if (res && res.result && res.result.resources) {
+                discoveredResources = res.result.resources;
+                const select = document.getElementById('selectResources');
+                select.innerHTML = '';
+                document.getElementById('lblResourceCount').innerText = discoveredResources.length;
+
+                discoveredResources.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.uri;
+                    opt.innerText = `${r.uri} (${r.name})`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        function onToolSelected() {
+            const toolName = document.getElementById('selectTools').value;
+            const tool = discoveredTools.find(t => t.name === toolName);
+            if (tool && tool.inputSchema) {
+                // Construct sample argument payload from schema
+                const sampleArgs = {};
+                if (tool.inputSchema.properties) {
+                    Object.keys(tool.inputSchema.properties).forEach(k => {
+                        const prop = tool.inputSchema.properties[k];
+                        sampleArgs[k] = prop.default !== undefined ? prop.default : (prop.type === 'boolean' ? true : (prop.type === 'integer' || prop.type === 'number' ? 3 : 'sample_value'));
+                    });
+                }
+                document.getElementById('txtArguments').value = JSON.stringify(sampleArgs, null, 2);
+            }
+        }
+
+        function onResourceSelected() {
+            const uri = document.getElementById('selectResources').value;
+            if (uri && uri.startsWith('ui://')) {
+                readResourceByUri(uri);
+            }
+        }
+
+        async function executeSelectedTool() {
+            const toolName = document.getElementById('selectTools').value;
+            if (!toolName) return;
+
+            let args = {};
+            try {
+                args = JSON.parse(document.getElementById('txtArguments').value);
+            } catch (e) {
+                alert('Invalid JSON in Arguments field!');
+                return;
+            }
+
+            const params = { name: toolName, arguments: args };
+
+            // Inject out-of-band _meta if checked
+            if (document.getElementById('chkUseMeta').checked) {
+                params._meta = {
+                    client_id: document.getElementById('metaClientId').value,
+                    user_id: document.getElementById('metaUserId').value,
+                    tenant_id: document.getElementById('metaTenantId').value,
+                    trace_id: document.getElementById('metaTraceId').value
+                };
+            }
+
+            const res = await sendRpcRequest('tools/call', params);
+            
+            // Check if tool returned an Embedded MCP App UI component
+            if (res && res.result && res.result.content) {
+                res.result.content.forEach(item => {
+                    if (item.type === 'resource' && item.resource && item.resource.mimeType === 'text/html;profile=mcp-app') {
+                        renderMcpAppWidget(item.resource.text);
+                    }
+                });
+            }
+        }
+
+        async function readSelectedResource() {
+            const uri = document.getElementById('selectResources').value;
+            if (!uri) return;
+            readResourceByUri(uri);
+        }
+
+        async function readResourceByUri(uri) {
+            const res = await sendRpcRequest('resources/read', { uri: uri });
+            if (res && res.result && res.result.contents && res.result.contents.length > 0) {
+                const item = res.result.contents[0];
+                if (item.mimeType === 'text/html;profile=mcp-app' || item.uri.startsWith('ui://')) {
+                    renderMcpAppWidget(item.text);
+                }
+            }
+        }
+
+        function renderMcpAppWidget(htmlContent) {
+            const placeholder = document.getElementById('appPlaceholder');
+            const iframe = document.getElementById('appIframe');
+            placeholder.style.display = 'none';
+            iframe.style.display = 'block';
+            iframe.srcdoc = htmlContent;
+            appendLog('log-info', '🖥️ RENDERING FORMAL MCP APP WIDGET', 'Embedded HTML/JS component rendered into iframe container (text/html;profile=mcp-app)');
+        }
+
+        // Listen to postMessage events from embedded MCP Apps
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'mcp-app-event') {
+                appendLog('log-stream', '📩 MCP APP postMessage EVENT RECEIVED FROM IFRAME', e.data);
+            }
+        });
+    </script>
+</body>
+</html>
