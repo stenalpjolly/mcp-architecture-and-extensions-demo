@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .DS_Store
 data_store.json
+.env
+booth_demo_host/.env
