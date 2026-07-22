@@ -1,41 +1,37 @@
-# 🗺️ Demo 5: Remote MCP Server & Streamable HTTP Toolset
+# 🗺️ Demo 5: Remote MCP Server with MCPToolset & Streamable HTTP
 
 ## Architecture Overview
 
-This demo showcases connecting to a **Remote MCP Server** via **Streamable HTTP & SSE Transport** using custom header authentication (`X-Goog-Api-Key`).
+This demo demonstrates configuring an **`MCPToolset`** with **`StreamableHTTPConnectionParams`** to connect to a **Remote MCP Server** using custom header authentication (`X-Goog-Api-Key`).
 
-```
-┌──────────────────────────────────────┐          Streamable HTTP          ┌───────────────────────────────────────┐
-│       Client Host / MCP Toolset       │  ────────────────────────────►  │     Remote Maps MCP Server (Port 8005) │
-│ (headers={"X-Goog-Api-Key": key})     │  ◄────────────────────────────  │  • geocode_address                   │
-└──────────────────────────────────────┘     SSE Stream & POST Messages   │  • search_places                     │
-                                                                           │  • calculate_route                   │
-                                                                           │  • launch_maps_app (ui://maps_app)   │
-                                                                           └───────────────────────────────────────┘
+```python
+def get_maps_mcp_toolset():
+  dotenv.load_dotenv()
+  maps_api_key = os.getenv('MAPS_API_KEY', 'no_api_found')
+
+  tools = MCPToolset(
+      connection_params=StreamableHTTPConnectionParams(
+          url=MAPS_MCP_URL, headers={'X-Goog-Api-Key': maps_api_key}
+      )
+  )
+  print('MCP Toolset configured for Streamable HTTP connection.')
+  return tools
 ```
 
 ## Features
 
-1. **Header-Based Authentication**:
-   Client toolsets connect with custom headers like `X-Goog-Api-Key` or `Authorization`.
+1. **Remote MCP Connection**:
+   Connects directly to remote Streamable HTTP / SSE endpoints (`MAPS_MCP_URL`).
 
-2. **Streamable HTTP Connection**:
-   Uses `MCPToolset` with `StreamableHTTPConnectionParams` to route RPC calls over SSE and POST channels.
+2. **Custom Header Authentication**:
+   Passes custom authorization headers (`X-Goog-Api-Key`) for authenticated remote MCP tool execution.
 
-3. **Remote Maps Tools**:
-   - `geocode_address`: Converts location text into latitude/longitude coordinates.
-   - `search_places`: Searches for points of interest nearby.
-   - `calculate_route`: Calculates distance, travel time, and turn-by-turn directions.
-   - `launch_maps_app`: Renders an embedded interactive HTML Map widget (`ui://maps_app`).
+3. **No Local Tools**:
+   Zero local `@mcp.tool()` definitions — all tools are dynamically retrieved from the remote MCP server!
 
-## Quickstart
+## Execution
 
-Run the server independently:
-```bash
-python3 server.py --sse --port 8005
-```
-
-Test the remote toolset client:
+Run the toolset client:
 ```bash
 python3 mcp_toolset_client.py
 ```

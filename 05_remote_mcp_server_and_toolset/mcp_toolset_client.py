@@ -16,7 +16,7 @@ user_site = site.getusersitepackages()
 if user_site and user_site not in sys.path:
     sys.path.insert(0, user_site)
 
-MAPS_MCP_URL = os.getenv("MAPS_MCP_URL", "http://127.0.0.1:8000/api/demo5/sse")
+MAPS_MCP_URL = os.getenv("MAPS_MCP_URL", "https://maps.mcp.googleapis.com/mcp/v1/sse")
 
 
 @dataclass
@@ -30,10 +30,11 @@ class MCPToolset:
         self.connection_params = connection_params
         self.url = connection_params.url
         self.headers = connection_params.headers
-        print(f"✔ MCP Toolset connected over Streamable HTTP: {self.url} (Headers: {list(self.headers.keys())})")
+        print(f"✔ MCP Toolset configured for Streamable HTTP connection to {self.url}")
 
-    def list_tools(self):
-        return ["geocode_address", "search_places", "calculate_route", "launch_maps_app"]
+    def get_tools(self):
+        print(f"Connecting to remote MCP server at {self.url} with headers {list(self.headers.keys())}...")
+        return self
 
 
 def get_maps_mcp_toolset() -> MCPToolset:
@@ -54,4 +55,4 @@ def get_maps_mcp_toolset() -> MCPToolset:
 
 if __name__ == "__main__":
     toolset = get_maps_mcp_toolset()
-    print("Available Remote Tools:", toolset.list_tools())
+    toolset.get_tools()
