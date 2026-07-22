@@ -77,30 +77,90 @@ SUBSCRIBED_CLIENTS: Dict[str, bool] = {}
 # 1. MCP APPS & INTERACTIVE UI COMPONENTS (ui://)
 # ==============================================================================
 
-HTML_ANALYTICS_APP = """<!DOCTYPE html>
+def build_dynamic_chart_html(v1: float = 20.0, v2: float = 50.0, v3: float = 30.0, title: str = "Interactive Distribution Chart") -> str:
+    total = v1 + v2 + v3
+    p1 = (v1 / total) * 100.0 if total > 0 else 20.0
+    p2 = (v2 / total) * 100.0 if total > 0 else 50.0
+    p3 = 100.0 - p1 - p2
+    
+    off1 = 25.0
+    off2 = 25.0 - p1
+    off3 = 25.0 - p1 - p2
+
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MCP App: Analytics Dashboard</title>
+    <title>MCP App: {title}</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-bottom: 16px; }
-        .metric { font-size: 32px; font-weight: bold; color: #38bdf8; margin: 10px 0; }
-        .btn { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .btn:hover { background: #1d4ed8; }
+        body {{ font-family: system-ui, -apple-system, sans-serif; background: #090d16; color: #f8fafc; padding: 16px; margin: 0; }}
+        .card {{ background: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }}
+        .header-title {{ font-size: 1.1rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }}
+        .chart-container {{ display: flex; align-items: center; justify-content: space-around; gap: 20px; flex-wrap: wrap; }}
+        .legend {{ display: flex; flex-direction: column; gap: 10px; }}
+        .legend-item {{ display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }}
+        .legend-color {{ width: 14px; height: 14px; border-radius: 4px; }}
+        .btn {{ background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.83rem; margin-top: 14px; transition: all 0.2s; }}
+        .btn:hover {{ background: #1d4ed8; }}
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>📊 Real-Time MCP App Component</h2>
-        <p>Interactive web widget embedded directly inside the host interface.</p>
-        <div class="metric" id="activeUsers">1,248</div>
-        <p>Active Session Concurrency</p>
-        <button class="btn" onclick="alert('Submitted event to host!')">Submit RPC Event to Host</button>
+        <div class="header-title">📊 {title}</div>
+        <div class="chart-container">
+            <svg width="160" height="160" viewBox="0 0 42 42" class="donut" style="transform: rotate(-90deg);">
+                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1e293b" stroke-width="5"></circle>
+                
+                <!-- Segment 1 ({p1:.1f}%) -->
+                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#38bdf8" stroke-width="5"
+                        stroke-dasharray="{p1:.1f} {100-p1:.1f}" stroke-dashoffset="{off1:.1f}"></circle>
+                
+                <!-- Segment 2 ({p2:.1f}%) -->
+                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="5"
+                        stroke-dasharray="{p2:.1f} {100-p2:.1f}" stroke-dashoffset="{off2:.1f}"></circle>
+                
+                <!-- Segment 3 ({p3:.1f}%) -->
+                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f59e0b" stroke-width="5"
+                        stroke-dasharray="{p3:.1f} {100-p3:.1f}" stroke-dashoffset="{off3:.1f}"></circle>
+                
+                <g class="chart-text">
+                    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#f8fafc" font-size="6" font-weight="bold" style="transform: rotate(90deg); transform-origin: center;">100%</text>
+                </g>
+            </svg>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#38bdf8;"></span>
+                    <span>Segment 1: <strong>{p1:.1f}%</strong></span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#10b981;"></span>
+                    <span>Segment 2: <strong>{p2:.1f}%</strong></span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#f59e0b;"></span>
+                    <span>Remaining: <strong>{p3:.1f}%</strong></span>
+                </div>
+            </div>
+        </div>
+        <button class="btn" onclick="sendPostMessage()">Submit Component State Event to Host</button>
     </div>
+    <script>
+        function sendPostMessage() {{
+            window.parent.postMessage({{
+                type: 'mcp-app-event',
+                event: 'chart_clicked',
+                data: {{ slice_1: '{p1:.1f}%', slice_2: '{p2:.1f}%', slice_remaining: '{p3:.1f}%' }}
+            }}, '*');
+            alert('Dispatched component event to host interface!');
+        }}
+    </script>
 </body>
-</html>
-"""
+</html>"""
+
+
+HTML_ANALYTICS_APP = build_dynamic_chart_html(20.0, 50.0, 30.0, "MCP App: Interactive Analytics Chart")
+
 
 @mcp.resource("ui://analytics_app", mime_type="text/html;profile=mcp-app")
 async def get_analytics_ui_app() -> str:
@@ -109,18 +169,40 @@ async def get_analytics_ui_app() -> str:
 
 
 @mcp.tool()
-async def launch_analytics_app(initial_view: str = "dashboard", ctx: Context = None) -> list:
-    """Launch interactive MCP App widget inside the host interface (Formal MCP Apps Spec)."""
+async def generate_ui_chart(slice1_pct: float = 20.0, slice2_pct: float = 50.0, title: str = "Data Distribution Chart", ctx: Context = None) -> list:
+    """Generate an interactive HTML UI widget component displaying a custom percentage chart (e.g. 20%, 50%, and remaining 30%)."""
+    remaining = max(0.0, 100.0 - slice1_pct - slice2_pct)
     if ctx:
-        await ctx.info(f"Launching MCP App UI Component (view='{initial_view}', profile='mcp-app')")
+        await ctx.info(f"Generating UI Chart Component ({slice1_pct}%, {slice2_pct}%, remaining {remaining:.1f}%)")
         
+    html_content = build_dynamic_chart_html(slice1_pct, slice2_pct, remaining, title)
     return [
         EmbeddedResource(
             type="resource",
             resource=TextResourceContents(
                 uri="ui://analytics_app",
                 mimeType="text/html;profile=mcp-app",
-                text=HTML_ANALYTICS_APP
+                text=html_content
+            )
+        )
+    ]
+
+
+@mcp.tool()
+async def launch_analytics_app(initial_view: str = "chart", slice1: float = 20.0, slice2: float = 50.0, ctx: Context = None) -> list:
+    """Launch interactive MCP App widget displaying custom chart distributions inside the host interface (Formal MCP Apps Spec)."""
+    remaining = max(0.0, 100.0 - slice1 - slice2)
+    if ctx:
+        await ctx.info(f"Launching MCP App UI Component ({slice1}%, {slice2}%, remaining {remaining:.1f}%)")
+        
+    html_content = build_dynamic_chart_html(slice1, slice2, remaining, "MCP Interactive Distribution Chart")
+    return [
+        EmbeddedResource(
+            type="resource",
+            resource=TextResourceContents(
+                uri="ui://analytics_app",
+                mimeType="text/html;profile=mcp-app",
+                text=html_content
             )
         )
     ]

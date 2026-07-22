@@ -573,8 +573,9 @@
         }
 
         const DEMO_TOOL_PRESETS = {
+            generate_ui_chart: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" },
             add_numbers: { a: 15, b: 27 },
-            launch_analytics_app: { initial_view: "revenue", export_enabled: true },
+            launch_analytics_app: { initial_view: "chart", slice1: 20, slice2: 50 },
             transfer_funds_with_approval: { from_account: "ACC-1001-USD", to_account: "ACC-2002-EUR", amount: 750.00, currency: "USD" },
             start_background_export_task: { export_type: "csv", time_range: "last_30_days" },
             get_task_status: { task_id: "task_exp_99" },
@@ -812,6 +813,24 @@
                 const res = await sendRpcRequest('tools/call', toolCall);
                 if (res && res.result) {
                     appendChatMessage('assistant', 'Transfer completed with elicitation check!', null, res.result);
+                }
+                return;
+            }
+
+            if (lower.includes('chart') || lower.includes('20%') || lower.includes('50%') || lower.includes('remaining') || lower.includes('generate ui')) {
+                const toolCall = { name: 'generate_ui_chart', args: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" } };
+                appendChatMessage('assistant', 'Generating interactive UI SVG chart widget displaying 20%, 50%, and remaining 30%...', toolCall);
+                const toolRes = await sendRpcRequest('tools/call', toolCall);
+                let appHtml = null;
+                if (toolRes && toolRes.result && toolRes.result.content) {
+                    toolRes.result.content.forEach(c => {
+                        if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') appHtml = c.resource.text;
+                    });
+                }
+                if (appHtml) {
+                    appendChatMessage('assistant', 'Rendered interactive MCP App UI Chart Component:', null, toolRes ? toolRes.result : null, appHtml);
+                } else {
+                    appendChatMessage('assistant', 'Could not locate an MCP App resource on this server. Switch to Demo 4 (Modern Spec Extensions & Formal MCP Apps) in the server selector at top right!');
                 }
                 return;
             }
