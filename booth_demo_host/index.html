@@ -14,37 +14,31 @@
            Design Read: Technical SaaS host with Google Brand Palette + Material Dark Surfaces
            ========================================================================== */
         :root {
-            /* Google Material 3 Dark Palette Elevation Surfaces */
             --bg-canvas: #131314;
             --bg-surface-l1: #1e1f20;
             --bg-surface-l2: #282a2c;
             --bg-surface-l3: #3c4043;
             --bg-chat-canvas: #18191b;
             
-            /* Precision Micro-Borders */
             --border-subtle: rgba(255, 255, 255, 0.08);
             --border-medium: rgba(255, 255, 255, 0.16);
             --border-accent: rgba(138, 180, 248, 0.35);
 
-            /* Typography Colors */
             --text-primary: #e3e3e3;
             --text-secondary: #c4c7c5;
             --text-muted: #8e918f;
 
-            /* Official Google Colors */
             --google-blue: #4285f4;
             --google-red: #ea4335;
             --google-yellow: #fbbc05;
             --google-green: #34a853;
 
-            /* Calibrated Dark Theme Tokens */
             --accent-primary: #8ab4f8;
             --accent-primary-hover: #4285f4;
             --accent-success: #81c995;
             --accent-warning: #fdd663;
             --accent-danger: #f28b82;
 
-            /* Fonts & Radii */
             --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
 
@@ -71,9 +65,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --------------------------------------------------------------------------
-           Header Navigation Bar
-           -------------------------------------------------------------------------- */
+        /* Header Navigation */
         header.app-header {
             background: var(--bg-surface-l1);
             border-bottom: 1px solid var(--border-subtle);
@@ -168,7 +160,6 @@
             box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.25);
         }
 
-        /* 5-State Button Controls */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -196,12 +187,6 @@
             box-shadow: 0 0 0 2px var(--bg-canvas), 0 0 0 4px var(--accent-primary);
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
         .btn-primary {
             background: var(--google-blue);
             color: #ffffff;
@@ -221,9 +206,7 @@
             border-color: var(--border-medium);
         }
 
-        /* --------------------------------------------------------------------------
-           Top View Tabs Navigation
-           -------------------------------------------------------------------------- */
+        /* Top View Tabs Navigation */
         nav.view-tabs {
             display: flex;
             background: var(--bg-surface-l1);
@@ -253,9 +236,7 @@
             border-bottom-color: var(--google-blue);
         }
 
-        /* --------------------------------------------------------------------------
-           Main Workspace Grid (Flexible Canvas Fit)
-           -------------------------------------------------------------------------- */
+        /* Main Workspace Grid */
         main.main-content {
             flex: 1;
             display: flex;
@@ -458,26 +439,46 @@
         .log-success { color: var(--accent-success); }
         .log-err { color: var(--accent-danger); }
 
-        /* Developer Protocol Inspector Grid */
+        /* --------------------------------------------------------------------------
+           Developer Protocol Inspector 2x2 Bento Grid
+           -------------------------------------------------------------------------- */
         .inspector-grid {
             display: grid;
-            grid-template-cols: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-cols: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
             gap: 16px;
-            overflow-y: auto;
             height: 100%;
+            overflow: hidden;
+        }
+
+        @media (max-width: 900px) {
+            .inspector-grid {
+                grid-template-cols: 1fr;
+                grid-template-rows: auto;
+                overflow-y: auto;
+            }
         }
 
         .code-block {
-            background: #0d0e11;
+            flex: 1;
+            background: #0b0c0e;
             padding: 14px;
             border-radius: var(--radius-sm);
             font-family: var(--font-mono);
             font-size: 0.78rem;
             color: #e2e8f0;
-            overflow-x: auto;
+            overflow: auto;
             border: 1px solid var(--border-subtle);
-            max-height: 260px;
+            min-height: 0;
+            line-height: 1.6;
         }
+
+        /* JSON Syntax Highlighting Tokens */
+        .json-key { color: var(--accent-primary); font-weight: 600; }
+        .json-string { color: var(--accent-success); }
+        .json-number { color: var(--accent-warning); }
+        .json-boolean { color: var(--accent-danger); font-weight: 600; }
+        .json-null { color: var(--text-muted); font-style: italic; }
 
         iframe.mcp-app-frame {
             width: 100%;
@@ -575,23 +576,50 @@
                 </div>
             </div>
 
-            <!-- Developer Protocol Inspector View -->
+            <!-- Developer Protocol Inspector 2x2 Bento Grid View -->
             <div id="inspectorView" class="inspector-grid" style="display: none;">
+                <!-- Bento Card 1: Tools -->
                 <div class="surface-card">
-                    <div class="card-header"><div class="card-title">📡 Discovered Tools</div></div>
-                    <div style="padding: 16px;"><pre class="code-block" id="toolsDisplay">No connection initialized.</pre></div>
+                    <div class="card-header">
+                        <div class="card-title">📡 Discovered Tools</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('toolsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                    </div>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <pre class="code-block" id="toolsDisplay">No connection initialized.</pre>
+                    </div>
                 </div>
+
+                <!-- Bento Card 2: Resources -->
                 <div class="surface-card">
-                    <div class="card-header"><div class="card-title">📄 Discovered Resources</div></div>
-                    <div style="padding: 16px;"><pre class="code-block" id="resourcesDisplay">No connection initialized.</pre></div>
+                    <div class="card-header">
+                        <div class="card-title">📄 Discovered Resources</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('resourcesDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                    </div>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <pre class="code-block" id="resourcesDisplay">No connection initialized.</pre>
+                    </div>
                 </div>
+
+                <!-- Bento Card 3: Prompts -->
                 <div class="surface-card">
-                    <div class="card-header"><div class="card-title">💡 Discovered Prompts</div></div>
-                    <div style="padding: 16px;"><pre class="code-block" id="promptsDisplay">No connection initialized.</pre></div>
+                    <div class="card-header">
+                        <div class="card-title">💡 Discovered Prompts</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('promptsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                    </div>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <pre class="code-block" id="promptsDisplay">No connection initialized.</pre>
+                    </div>
                 </div>
+
+                <!-- Bento Card 4: Capabilities -->
                 <div class="surface-card">
-                    <div class="card-header"><div class="card-title">🔑 Client Capabilities</div></div>
-                    <div style="padding: 16px;"><pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre></div>
+                    <div class="card-header">
+                        <div class="card-title">🔑 Client Capabilities</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('capabilitiesDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                    </div>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre>
+                    </div>
                 </div>
             </div>
 
@@ -700,6 +728,34 @@
             appendLog('log-info', 'CHAT THREAD CLEARED');
         }
 
+        function copyInspectorJson(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                navigator.clipboard.writeText(el.innerText);
+                appendLog('log-success', 'COPIED TO CLIPBOARD', `Copied JSON data from ${elementId}`);
+            }
+        }
+
+        function highlightJsonHtml(jsonObj) {
+            if (!jsonObj) return 'No data available.';
+            const jsonStr = JSON.stringify(jsonObj, null, 2);
+            return jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
         function toggleConnect() {
             if (isConnected) disconnectSse();
             else connectSse();
@@ -804,10 +860,10 @@
         }
 
         function updateInspectorView() {
-            document.getElementById('toolsDisplay').innerText = JSON.stringify(discoveredTools, null, 2);
-            document.getElementById('resourcesDisplay').innerText = JSON.stringify(discoveredResources, null, 2);
-            document.getElementById('promptsDisplay').innerText = JSON.stringify(discoveredPrompts, null, 2);
-            document.getElementById('capabilitiesDisplay').innerText = JSON.stringify({ protocolVersion: '2024-11-05', client: 'booth_demo_host' }, null, 2);
+            document.getElementById('toolsDisplay').innerHTML = highlightJsonHtml(discoveredTools);
+            document.getElementById('resourcesDisplay').innerHTML = highlightJsonHtml(discoveredResources);
+            document.getElementById('promptsDisplay').innerHTML = highlightJsonHtml(discoveredPrompts);
+            document.getElementById('capabilitiesDisplay').innerHTML = highlightJsonHtml({ protocolVersion: '2024-11-05', client: 'booth_demo_host' });
         }
 
         function sendQuickPrompt(text) {
