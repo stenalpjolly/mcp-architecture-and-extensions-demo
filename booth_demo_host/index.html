@@ -868,6 +868,13 @@
             }
         }
 
+        document.getElementById('chatInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleChatSubmit();
+            }
+        });
+
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'mcp-app-event') {
                 appendLog('log-success', 'POSTMESSAGE EVENT FROM MCP APP WIDGET', JSON.stringify(event.data, null, 2));
