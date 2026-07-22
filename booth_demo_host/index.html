@@ -79,10 +79,10 @@
 
         <div class="server-controls">
             <select id="serverSelect">
-                <option value="http://127.0.0.1:8001">⚡ Demo 1: Stateless MCP Server (Port 8001)</option>
-                <option value="http://127.0.0.1:8002" selected>📡 Demo 2: Option 1 Protocol Connection Stateful Server (Port 8002)</option>
-                <option value="http://127.0.0.1:8003">🔐 Demo 3: Out-of-Band _meta Request Metadata Server (Port 8003)</option>
-                <option value="http://127.0.0.1:8004">🚀 Demo 4: Modern Extensions & Formal MCP Apps Server (Port 8004)</option>
+                <option value="/api/demo1">⚡ Demo 1: Stateless MCP Server (Proxied Port 8000)</option>
+                <option value="/api/demo2" selected>📡 Demo 2: Option 1 Protocol Connection Stateful Server (Proxied Port 8000)</option>
+                <option value="/api/demo3">🔐 Demo 3: Out-of-Band _meta Request Metadata Server (Proxied Port 8000)</option>
+                <option value="/api/demo4">🚀 Demo 4: Modern Spec Extensions & Formal MCP Apps Server (Proxied Port 8000)</option>
             </select>
             <button class="btn-primary" id="btnConnect" onclick="toggleConnect()">Connect Host RPC</button>
         </div>
