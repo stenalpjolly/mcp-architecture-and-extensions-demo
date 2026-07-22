@@ -576,6 +576,7 @@
         }
 
         const DEMO_TOOL_PRESETS = {
+            add_numbers: { a: 15, b: 27 },
             launch_analytics_app: { initial_view: "revenue", export_enabled: true },
             transfer_funds_with_approval: { from_account: "ACC-1001-USD", to_account: "ACC-2002-EUR", amount: 750.00, currency: "USD" },
             start_background_export_task: { export_type: "csv", time_range: "last_30_days" },
@@ -860,17 +861,7 @@
                 return;
             }
 
-            if (discoveredTools.length > 0) {
-                const tool = discoveredTools[0];
-                const toolCall = { name: tool.name, args: { count: 3 } };
-                appendChatMessage('assistant', `Executing tool: ${tool.name}`, toolCall);
-                const res = await sendRpcRequest('tools/call', toolCall);
-                if (res && res.result) {
-                    appendChatMessage('assistant', 'Tool execution finished:', null, res.result);
-                }
-            } else {
-                appendChatMessage('assistant', `Received: "${text}". Enter your Gemini API Key in the top header bar to connect live Gemini 2.5 Flash!`);
-            }
+            appendChatMessage('assistant', `Hello! How can I assist you? You can ask me to run tools, perform financial transfers, or launch interactive MCP Apps.\n\n💡 Tip: Enter a Gemini API Key in the top header bar to enable live Gemini 3.6 Flash reasoning!`);
         }
 
         window.addEventListener('message', (e) => {
