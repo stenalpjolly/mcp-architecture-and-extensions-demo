@@ -174,7 +174,7 @@
                 <!-- Right: Live Side Log Stream Panel -->
                 <section class="pane" style="border-right:none;">
                     <div class="pane-title">
-                        <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
+                        <span>📡 Live Smart SSE Inspector</span>
                         <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
                     </div>
                     <div class="pane-body" style="padding:0;">
@@ -257,7 +257,7 @@
                 <!-- Column 3: Developer Live Log Stream -->
                 <section class="pane" style="border-right: none;">
                     <div class="pane-title">
-                        <span>📡 Developer Stream Inspector</span>
+                        <span>📡 Smart SSE Stream Inspector</span>
                         <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
                     </div>
                     <div class="pane-body" style="padding:0;">
@@ -278,6 +278,32 @@
         let discoveredTools = [];
         let discoveredResources = [];
         let pendingRpcResolvers = {};
+
+        function showNotificationToast(msg) {
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toastContainer';
+                toastContainer.style.cssText = 'position:fixed; top:70px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px;';
+                document.body.appendChild(toastContainer);
+            }
+
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:#065f46; color:#a7f3d0; border:1px solid #047857; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,0.4); opacity:0; transition:all 0.3s ease; transform:translateY(-10px);';
+            toast.innerText = msg;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
 
         function switchView(viewName) {
             document.getElementById('tabChat').className = viewName === 'chat' ? 'tab-item active' : 'tab-item';
@@ -346,22 +372,54 @@
                 performProtocolHandshake();
             });
 
+            // SMART ASYNCHRONOUS SSE MESSAGE CLASSIFIER & ENGINE
             eventSource.addEventListener('message', (e) => {
                 try {
                     const data = JSON.parse(e.data);
-                    appendLog('log-stream', '📡 ASYNC SSE NOTIFICATION STREAM', data);
                     
-                    if (data.id && pendingRpcResolvers[data.id]) {
-                        pendingRpcResolvers[data.id](data);
-                        delete pendingRpcResolvers[data.id];
+                    // 1. Async JSON-RPC Response Payload (Matching ID)
+                    if (data.id) {
+                        if (pendingRpcResolvers[data.id]) {
+                            pendingRpcResolvers[data.id](data);
+                            delete pendingRpcResolvers[data.id];
+                        }
+                        
+                        if (data.error) {
+                            appendLog('log-err', `❌ JSON-RPC ERROR RESPONSE (ID #${data.id})`, data.error);
+                        } else {
+                            appendLog('log-res', `📥 JSON-RPC ASYNC RESPONSE RECEIVED (ID #${data.id})`, data.result);
+                        }
+                        return;
                     }
 
-                    if (data.method === 'notifications/tools/list_changed') {
-                        appendLog('log-info', '✨ DYNAMIC SCHEMA MUTATION DETECTED', 'Re-querying tools/list...');
-                        fetchToolsList();
+                    // 2. Server Push Notifications (No ID, Has Method)
+                    if (data.method) {
+                        const method = data.method;
+                        
+                        if (method === 'notifications/tools/list_changed') {
+                            appendLog('log-stream', '✨ DYNAMIC SCHEMA MUTATION (notifications/tools/list_changed)', 'Server declared tool registry update. Re-querying tools/list...');
+                            showNotificationToast('✨ Server tool registry updated dynamically!');
+                            fetchToolsList();
+                            appendChatMessage('assistant', '🔔 Server Notification: Dynamic tool schema mutated! Updated tool registry automatically.');
+                        } else if (method === 'notifications/resources/updated') {
+                            appendLog('log-stream', `🔄 RESOURCE MUTATION UPDATE (${method})`, data.params);
+                            showNotificationToast('🔄 Subscribed resource updated!');
+                            if (data.params && data.params.uri) {
+                                appendChatMessage('assistant', `🔔 Server Notification: Subscribed resource "${data.params.uri}" was updated!`, null, data.params);
+                            }
+                        } else if (method === 'notifications/progress') {
+                            const prog = data.params ? `${data.params.progress} / ${data.params.total || '100'}` : '';
+                            appendLog('log-stream', `⏳ TASK PROGRESS NOTIFICATION (${prog})`, data.params);
+                        } else {
+                            appendLog('log-stream', `🔔 SERVER ASYNC NOTIFICATION (${method})`, data.params || data);
+                        }
+                        return;
                     }
+
+                    // 3. Fallback Raw SSE Payload
+                    appendLog('log-stream', '📡 ASYNC SSE PAYLOAD', data);
                 } catch (err) {
-                    appendLog('log-stream', '📡 ASYNC RAW SSE STREAM', e.data);
+                    appendLog('log-stream', '📡 ASYNC SSE TEXT STREAM', e.data);
                 }
             });
         }
@@ -412,7 +470,7 @@
                 params: mergedParams
             };
 
-            appendLog('log-req', `📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD (${method})`, payload);
+            appendLog('log-req', `📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD (${method} - ID #${currentId})`, payload);
 
             const promise = new Promise((resolve) => {
                 pendingRpcResolvers[currentId] = resolve;
@@ -435,10 +493,10 @@
                 if (resText) {
                     try {
                         const resJson = JSON.parse(resText);
-                        appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD', resJson);
+                        appendLog('log-res', `📥 DIRECT JSON-RPC RESPONSE (ID #${currentId})`, resJson);
                         return resJson;
                     } catch (e) {
-                        appendLog('log-info', '📥 HTTP POST ACKNOWLEDGED (202 Accepted)', resText);
+                        appendLog('log-info', `📥 HTTP POST TRANSMISSION ACKNOWLEDGED (202 Accepted - ID #${currentId})`, 'Awaiting async response over SSE stream...');
                     }
                 }
             } catch (err) {
@@ -446,9 +504,6 @@
             }
 
             const sseData = await promise;
-            if (sseData) {
-                appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD (via SSE)', sseData);
-            }
             return sseData;
         }
 
