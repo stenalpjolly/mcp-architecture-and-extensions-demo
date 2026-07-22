@@ -255,7 +255,34 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
         pass  # Quiet HTTP logs
 
 
+def load_env_files():
+    """Loads GEMINI_API_KEY from workspace or user configuration .env files."""
+    search_paths = [
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+        os.path.expanduser("~/.env"),
+        os.path.expanduser("~/.gemini/.env"),
+        os.path.expanduser("~/.config/gemini/.env"),
+        "/etc/environment"
+    ]
+    for p in search_paths:
+        if os.path.exists(p):
+            try:
+                with open(p) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip('"').strip("'")
+                            if k and v:
+                                os.environ[k] = v
+            except Exception:
+                pass
+
+
 def serve_unified_proxy_host():
+    load_env_files()
     host_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(host_dir)
     
@@ -274,8 +301,11 @@ def serve_unified_proxy_host():
         print(f"\n{BOLD}{MAGENTA}========================================================================={RESET}")
         print(f"{BOLD}{YELLOW}🖥️  UNIFIED REVERSE PROXY & BOOTH DEMO HOST APPLICATION ONLINE!{RESET}")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}")
+        has_key = "GEMINI_API_KEY" in os.environ or "GOOGLE_API_KEY" in os.environ
+        key_status = f"{GREEN}✔ GEMINI_API_KEY Detected on Host{RESET}" if has_key else f"{YELLOW}ℹ GEMINI_API_KEY Not Detected in Host Env (Optional: Enter in UI Header){RESET}"
         print(f"👉 Web Dashboard Access: {BOLD}{CYAN}http://127.0.0.1:{port}/index.html{RESET}")
         print(f"👉 Unified Single-Port Architecture: All 4 MCP Servers proxied over Port {port}!")
+        print(f"👉 Host LLM Credentials: {key_status}")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}\n")
         print("Press [CTRL+C] to stop all servers and shutdown host application.\n")
         httpd.serve_forever()
