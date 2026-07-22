@@ -151,6 +151,11 @@
             <div class="chat-workspace-grid">
                 <!-- Left: Chat Thread & Input -->
                 <div class="chat-main">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:4px;">
+                        <span style="font-size:0.8rem; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:0.05em;">💬 Conversation History</span>
+                        <button style="background:#0f172a; border:1px solid var(--border-color); color:var(--text-muted); padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s;" onclick="clearChatThread()" onmouseover="this.style.color='#f87171';this.style.borderColor='#f87171'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-color)'">🧹 Clear Chat</button>
+                    </div>
+
                     <div class="chat-thread" id="chatThread">
                         <div class="bubble bubble-assistant">
                             <div class="bubble-header">🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash Connected)</div>
@@ -729,6 +734,21 @@
         function sendQuickPrompt(promptText) {
             document.getElementById('chatInput').value = promptText;
             handleChatSubmit();
+        }
+
+        function clearChatThread() {
+            const chatThread = document.getElementById('chatThread');
+            if (chatThread) {
+                chatThread.innerHTML = `
+                    <div class="bubble bubble-assistant">
+                        <div class="bubble-header">🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash Connected)</div>
+                        Chat conversation cleared. How can I assist you today?
+                        <div style="margin-top:6px; font-size:0.83rem; color:var(--text-muted);">
+                            💡 <strong>Tip:</strong> You can ask me to run tools, perform financial transfers, or generate dynamic interactive UI chart widgets!
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         async function handleChatSubmit() {
