@@ -3,50 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Booth Demo Host Dashboard</title>
+    <title>MCP Booth Demo Host Dashboard & Chat Assistant</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --panel-bg: #1e293b;
-            --border-color: #334155;
+            --bg-color: #0b0f19;
+            --panel-bg: #111827;
             --accent-cyan: #38bdf8;
-            --accent-green: #4ade80;
-            --accent-magenta: #c084fc;
-            --accent-yellow: #facc15;
-            --accent-blue: #3b82f6;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+            --accent-green: #34d399;
+            --accent-magenta: #f472b6;
+            --accent-yellow: #fbbf24;
+            --border-color: #1f2937;
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         /* Top Header */
-        header { background: #020617; border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        .logo-title { display: flex; align-items: center; gap: 12px; }
-        .logo-title h1 { font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header { background: var(--panel-bg); border-bottom: 1px solid var(--border-color); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-title { display: flex; align-items: center; gap: 10px; }
+        .logo-title h1 { font-size: 1.15rem; font-weight: 700; color: var(--accent-cyan); letter-spacing: 0.5px; }
+        .status-badge { background: #374151; color: #d1d5db; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; text-transform: uppercase; }
+        .status-connected { background: #065f46; color: #6ee7b7; }
+        .status-disconnected { background: #7f1d1d; color: #fca5a5; }
+
+        .server-controls { display: flex; align-items: center; gap: 10px; }
+        select { background: #090d16; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; cursor: pointer; }
         
-        .server-controls { display: flex; align-items: center; gap: 12px; }
-        select, input, button { font-family: inherit; font-size: 0.9rem; border-radius: 6px; outline: none; }
-        select, input[type="text"] { background: #090d16; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; }
-        
-        .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
         .btn-primary:hover { background: #1d4ed8; }
-        .btn-danger { background: #dc2626; color: white; border: none; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
 
-        .status-badge { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; background: #334155; color: var(--text-dim); }
-        .status-connected { background: #065f46; color: #34d399; }
-        .status-disconnected { background: #7f1d1d; color: #f87171; }
+        /* Navigation Mode Tabs */
+        .mode-tabs { display: flex; background: #020617; border-bottom: 1px solid var(--border-color); padding: 0 20px; }
+        .tab-btn { background: none; border: none; color: var(--text-dim); padding: 10px 18px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
 
-        /* Main Workspace Grid */
-        main { display: grid; grid-template-columns: 320px 1fr 450px; flex: 1; overflow: hidden; background: #020617; }
-        
+        /* Main Workspace Layout */
+        main { flex: 1; display: flex; overflow: hidden; position: relative; }
+        .view-pane { width: 100%; height: 100%; display: none; }
+        .view-pane.active { display: flex; }
+
+        /* Technical Inspector View Layout (3-Column Grid) */
+        .inspector-layout { width: 100%; display: grid; grid-template-columns: 300px 1fr 420px; height: 100%; }
         .panel { background: var(--panel-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-header { padding: 12px 16px; background: #182234; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
-        .panel-content { padding: 16px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .panel-header { padding: 10px 14px; background: #0d1321; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+        .panel-content { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 
-        /* Form elements */
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
         .form-group label { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; }
         textarea { background: #090d16; color: var(--accent-cyan); border: 1px solid var(--border-color); padding: 10px; font-family: monospace; font-size: 0.85rem; border-radius: 6px; resize: vertical; min-height: 90px; }
 
@@ -66,6 +73,24 @@
         .log-stream { color: var(--accent-magenta); }
         .log-err { color: #f87171; }
         .log-info { color: var(--text-dim); }
+
+        /* Chat View Layout */
+        .chat-layout { width: 100%; max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; height: 100%; padding: 15px; gap: 12px; }
+        .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 6px; }
+        .msg { display: flex; flex-direction: column; gap: 6px; max-width: 85%; border-radius: 10px; padding: 12px 16px; font-size: 0.9rem; line-height: 1.45; }
+        .msg-user { align-self: flex-end; background: #1e293b; border: 1px solid #334155; color: #f8fafc; }
+        .msg-assistant { align-self: flex-start; background: #0f172a; border: 1px solid #1e293b; color: #e2e8f0; width: 85%; }
+        .msg-header { font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+        
+        .tool-call-card { background: #020617; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.82rem; margin-top: 6px; color: var(--accent-yellow); }
+        .tool-res-card { background: #064e3b; border: 1px solid #047857; color: #a7f3d0; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.82rem; margin-top: 6px; white-space: pre-wrap; }
+
+        .chat-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { background: #0f172a; border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 16px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+        .chip:hover { background: #1e293b; border-color: var(--accent-cyan); }
+
+        .chat-input-bar { display: flex; gap: 8px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; }
+        .chat-input { flex: 1; background: transparent; border: none; color: white; font-size: 0.9rem; outline: none; padding: 4px 8px; }
     </style>
 </head>
 <body>
@@ -88,97 +113,142 @@
         </div>
     </header>
 
+    <nav class="mode-tabs">
+        <button class="tab-btn active" id="tabInspector" onclick="switchView('inspector')">🔬 Technical Protocol Inspector</button>
+        <button class="tab-btn" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Chat Interface</button>
+    </nav>
+
     <main>
-        <!-- Panel 1: Server Capabilities & Registry Inspector -->
-        <section class="panel">
-            <div class="panel-header">
-                <span>📋 Capabilities & Registry</span>
-                <button style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;" onclick="refreshRegistry()">🔄</button>
-            </div>
-            <div class="panel-content">
-                <div class="form-group">
-                    <label>Server Info & Capabilities</label>
-                    <textarea id="txtCapabilities" readonly style="height: 140px; color: var(--text-main);"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Discovered Tools (<span id="lblToolCount">0</span>)</label>
-                    <select id="selectTools" size="5" onchange="onToolSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
-                </div>
-
-                <div class="form-group">
-                    <label>Discovered Resources (<span id="lblResourceCount">0</span>)</label>
-                    <select id="selectResources" size="4" onchange="onResourceSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
-                </div>
-            </div>
-        </section>
-
-        <!-- Panel 2: Interactive RPC Execution & MCP App Frame -->
-        <section class="panel" style="border-right: 1px solid var(--border-color);">
-            <div class="panel-header">
-                <span>⚡ RPC Execution & MCP App Container</span>
-            </div>
-            <div class="panel-content">
-                
-                <!-- RPC Execution Configurator -->
-                <div class="form-group">
-                    <label>Tool Arguments JSON (`arguments`)</label>
-                    <textarea id="txtArguments">{\n  "count": 3\n}</textarea>
-                </div>
-
-                <!-- Out-of-Band _meta Configuration -->
-                <div class="meta-toggle">
-                    <div class="meta-toggle-header">
-                        <input type="checkbox" id="chkUseMeta" checked>
-                        <span>Inject Out-of-Band `_meta` Request Parameters</span>
+        <!-- View 1: Technical Protocol Inspector -->
+        <div class="view-pane active" id="viewInspector">
+            <div class="inspector-layout">
+                <!-- Panel 1: Server Capabilities & Registry Inspector -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <span>📋 Capabilities & Registry</span>
+                        <button style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;" onclick="refreshRegistry()">🔄</button>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                        <input type="text" id="metaClientId" value="client_booth_demo_99" placeholder="client_id">
-                        <input type="text" id="metaUserId" value="user_stenalp_42" placeholder="user_id">
-                        <input type="text" id="metaTenantId" value="tenant_acme_corp" placeholder="tenant_id">
-                        <input type="text" id="metaTraceId" value="tr_booth_7701a" placeholder="trace_id">
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-primary" style="flex:1;" onclick="executeSelectedTool()">Execute Tool RPC (`tools/call`)</button>
-                    <button class="btn-primary" style="background:#059669;" onclick="readSelectedResource()">Read Resource (`resources/read`)</button>
-                </div>
-
-                <!-- MCP App Webview Frame Container -->
-                <div class="form-group" style="margin-top: 10px;">
-                    <label style="color: var(--accent-magenta);">🖥️ Embedded MCP App Webview Container (`ui://` Frame)</label>
-                    <div class="mcp-app-container" id="appContainer">
-                        <div class="app-placeholder" id="appPlaceholder">
-                            ✨ Select an MCP App resource (e.g. <code>ui://analytics_app</code> or call <code>launch_analytics_app</code>) to render the interactive widget.
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label>Server Info & Capabilities</label>
+                            <textarea id="txtCapabilities" readonly style="height: 140px; color: var(--text-main);"></textarea>
                         </div>
-                        <iframe id="appIframe" style="display:none;"></iframe>
+
+                        <div class="form-group">
+                            <label>Discovered Tools (<span id="lblToolCount">0</span>)</label>
+                            <select id="selectTools" size="5" onchange="onToolSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Discovered Resources (<span id="lblResourceCount">0</span>)</label>
+                            <select id="selectResources" size="4" onchange="onResourceSelected()" style="background:#090d16; border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); padding:6px;"></select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Panel 2: Interactive RPC Execution & MCP App Frame -->
+                <section class="panel" style="border-right: 1px solid var(--border-color);">
+                    <div class="panel-header">
+                        <span>⚡ RPC Execution & MCP App Container</span>
+                    </div>
+                    <div class="panel-content">
+                        <!-- RPC Execution Configurator -->
+                        <div class="form-group">
+                            <label>Tool Arguments JSON (`arguments`)</label>
+                            <textarea id="txtArguments">{\n  "count": 3\n}</textarea>
+                        </div>
+
+                        <!-- Out-of-Band _meta Configuration -->
+                        <div class="meta-toggle">
+                            <div class="meta-toggle-header">
+                                <input type="checkbox" id="chkUseMeta" checked>
+                                <span>Inject Out-of-Band `_meta` Request Parameters</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                <input type="text" id="metaClientId" value="client_booth_demo_99" placeholder="client_id" style="background:#111827;border:1px solid var(--border-color);color:white;padding:4px 8px;border-radius:4px;">
+                                <input type="text" id="metaUserId" value="user_stenalp_42" placeholder="user_id" style="background:#111827;border:1px solid var(--border-color);color:white;padding:4px 8px;border-radius:4px;">
+                                <input type="text" id="metaTenantId" value="tenant_acme_corp" placeholder="tenant_id" style="background:#111827;border:1px solid var(--border-color);color:white;padding:4px 8px;border-radius:4px;">
+                                <input type="text" id="metaTraceId" value="tr_booth_7701a" placeholder="trace_id" style="background:#111827;border:1px solid var(--border-color);color:white;padding:4px 8px;border-radius:4px;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-primary" style="flex:1;" onclick="executeSelectedTool()">Execute Tool RPC (`tools/call`)</button>
+                            <button class="btn-primary" style="background:#059669;" onclick="readSelectedResource()">Read Resource (`resources/read`)</button>
+                        </div>
+
+                        <!-- MCP App Webview Frame Container -->
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label style="color: var(--accent-magenta);">🖥️ Embedded MCP App Webview Container (`ui://` Frame)</label>
+                            <div class="mcp-app-container" id="appContainer">
+                                <div class="app-placeholder" id="appPlaceholder">
+                                    ✨ Select an MCP App resource (e.g. <code>ui://analytics_app</code> or call <code>launch_analytics_app</code>) to render the interactive widget.
+                                </div>
+                                <iframe id="appIframe" style="display:none;"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Panel 3: Real-Time JSON-RPC Stream Inspector -->
+                <section class="panel" style="border-right: none;">
+                    <div class="panel-header">
+                        <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
+                        <button style="background:none;border:none;color:var(--text-dim);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
+                    </div>
+                    <div class="panel-content" style="padding:0;">
+                        <div class="terminal" id="terminalLog">
+                            <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- View 2: AI Assistant Chat Interface -->
+        <div class="view-pane" id="viewChat">
+            <div class="chat-layout">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="msg msg-assistant">
+                        <div class="msg-header">🤖 MCP Intelligent AI Assistant</div>
+                        Hello! I am connected to your live MCP server over HTTP SSE RPC transport. How can I help you today?
+                        <div style="margin-top:6px; font-size:0.8rem; color:var(--text-dim);">
+                            You can ask me to run tools, fetch resources, perform financial transfers, or launch interactive MCP Apps!
+                        </div>
                     </div>
                 </div>
 
-            </div>
-        </section>
+                <div class="chat-chips">
+                    <div class="chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discovered Capabilities</div>
+                    <div class="chip" onclick="sendQuickPrompt('Run system diagnostic report with count 5')">⚡ Run System Diagnostic</div>
+                    <div class="chip" onclick="sendQuickPrompt('Transfer $500 from ACC123 to ACC456 with approval')">💸 Transfer Funds (Human Elicitation)</div>
+                    <div class="chip" onclick="sendQuickPrompt('Launch the analytics dashboard app')">📊 Launch MCP Analytics App</div>
+                    <div class="chip" onclick="sendQuickPrompt('Start background export task and check status')">⏳ Background Tasks</div>
+                </div>
 
-        <!-- Panel 3: Real-Time JSON-RPC Stream Inspector -->
-        <section class="panel" style="border-right: none;">
-            <div class="panel-header">
-                <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
-                <button style="background:none;border:none;color:var(--text-dim);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
-            </div>
-            <div class="panel-content" style="padding:0;">
-                <div class="terminal" id="terminalLog">
-                    <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
+                <div class="chat-input-bar">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask assistant to execute MCP tools or render apps..." onkeypress="if(event.key === 'Enter') handleChatSubmit()">
+                    <button class="btn-primary" onclick="handleChatSubmit()">Send</button>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <script>
         let eventSource = null;
         let messageEndpoint = null;
-        let requestId = 1;
+        let rpcIdCounter = 1;
+
         let discoveredTools = [];
         let discoveredResources = [];
+        let pendingRpcResolvers = {};
+
+        function switchView(viewName) {
+            document.getElementById('tabInspector').className = viewName === 'inspector' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tabChat').className = viewName === 'chat' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('viewInspector').className = viewName === 'inspector' ? 'view-pane active' : 'view-pane';
+            document.getElementById('viewChat').className = viewName === 'chat' ? 'view-pane active' : 'view-pane';
+        }
 
         function appendLog(type, title, payload) {
             const term = document.getElementById('terminalLog');
@@ -238,6 +308,12 @@
                     const data = JSON.parse(e.data);
                     appendLog('log-stream', '📡 ASYNC SSE NOTIFICATION STREAM', data);
                     
+                    // Handle dynamic RPC resolution
+                    if (data.id && pendingRpcResolvers[data.id]) {
+                        pendingRpcResolvers[data.id](data);
+                        delete pendingRpcResolvers[data.id];
+                    }
+
                     // Handle dynamic tool schema change notification
                     if (data.method === 'notifications/tools/list_changed') {
                         appendLog('log-info', '✨ DYNAMIC SCHEMA MUTATION DETECTED', 'Re-querying tools/list...');
@@ -258,25 +334,55 @@
             document.getElementById('connBadge').innerText = 'Disconnected';
             document.getElementById('connBadge').className = 'status-badge status-disconnected';
             document.getElementById('btnConnect').innerText = 'Connect Host RPC';
-            document.getElementById('btnConnect').className = 'btn-primary';
-            appendLog('log-info', 'SESSION TERMINATED', 'Disconnected from MCP server.');
+            document.getElementById('txtCapabilities').value = '';
+            document.getElementById('selectTools').innerHTML = '';
+            document.getElementById('selectResources').innerHTML = '';
+            document.getElementById('lblToolCount').innerText = '0';
+            document.getElementById('lblResourceCount').innerText = '0';
+        }
+
+        function buildMetaParams() {
+            if (!document.getElementById('chkUseMeta').checked) return {};
+            return {
+                _meta: {
+                    client_id: document.getElementById('metaClientId').value,
+                    user_id: document.getElementById('metaUserId').value,
+                    tenant_id: document.getElementById('metaTenantId').value,
+                    trace_id: document.getElementById('metaTraceId').value
+                }
+            };
         }
 
         async function sendRpcRequest(method, params = {}) {
             if (!messageEndpoint) {
-                alert('Please connect to an MCP Server first!');
+                alert('Please connect to an MCP Server SSE endpoint first!');
                 return null;
             }
 
-            const currentId = requestId++;
+            const currentId = rpcIdCounter++;
+            const metaObj = buildMetaParams();
+            const mergedParams = { ...params, ...metaObj };
+
             const payload = {
                 jsonrpc: '2.0',
                 id: currentId,
                 method: method,
-                params: params
+                params: mergedParams
             };
 
-            appendLog('log-req', '📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD', payload);
+            appendLog('log-req', `📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD (${method})`, payload);
+
+            // Promise for async SSE resolution
+            const promise = new Promise((resolve) => {
+                pendingRpcResolvers[currentId] = resolve;
+                // Timeout fallback after 10s
+                setTimeout(() => {
+                    if (pendingRpcResolvers[currentId]) {
+                        delete pendingRpcResolvers[currentId];
+                        resolve(null);
+                    }
+                }, 10000);
+            });
 
             try {
                 const response = await fetch(messageEndpoint, {
@@ -287,18 +393,27 @@
                 
                 const resText = await response.text();
                 if (resText) {
-                    const resJson = JSON.parse(resText);
-                    appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD', resJson);
-                    return resJson;
+                    try {
+                        const resJson = JSON.parse(resText);
+                        appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD', resJson);
+                        return resJson;
+                    } catch (e) {
+                        appendLog('log-info', '📥 HTTP POST ACKNOWLEDGED (202 Accepted)', resText);
+                    }
                 }
             } catch (err) {
                 appendLog('log-err', 'RPC TRANSPORT FAILURE', err.toString());
             }
-            return null;
+
+            // Wait for SSE async message response
+            const sseData = await promise;
+            if (sseData) {
+                appendLog('log-res', '📥 RAW JSON-RPC 2.0 RESPONSE PAYLOAD (via SSE)', sseData);
+            }
+            return sseData;
         }
 
         async function performProtocolHandshake() {
-            // 1. Send initialize
             const initRes = await sendRpcRequest('initialize', {
                 protocolVersion: '2024-11-05',
                 capabilities: {},
@@ -308,7 +423,6 @@
             if (initRes && initRes.result) {
                 document.getElementById('txtCapabilities').value = JSON.stringify(initRes.result.capabilities, null, 2);
                 
-                // 2. Send notifications/initialized
                 const initNotifyPayload = { jsonrpc: '2.0', method: 'notifications/initialized' };
                 appendLog('log-stream', '📡 JSON-RPC INITIALIZED SIGNAL', initNotifyPayload);
                 await fetch(messageEndpoint, {
@@ -317,7 +431,6 @@
                     body: JSON.stringify(initNotifyPayload)
                 });
 
-                // 3. Discovery Phase
                 await refreshRegistry();
             }
         }
@@ -331,17 +444,15 @@
             const res = await sendRpcRequest('tools/list', {});
             if (res && res.result && res.result.tools) {
                 discoveredTools = res.result.tools;
+                document.getElementById('lblToolCount').innerText = discoveredTools.length;
                 const select = document.getElementById('selectTools');
                 select.innerHTML = '';
-                document.getElementById('lblToolCount').innerText = discoveredTools.length;
-
                 discoveredTools.forEach(t => {
                     const opt = document.createElement('option');
                     opt.value = t.name;
-                    opt.innerText = `${t.name} - ${t.description || ''}`;
+                    opt.innerText = `🔧 ${t.name}`;
                     select.appendChild(opt);
                 });
-
                 if (discoveredTools.length > 0) {
                     select.selectedIndex = 0;
                     onToolSelected();
@@ -353,73 +464,57 @@
             const res = await sendRpcRequest('resources/list', {});
             if (res && res.result && res.result.resources) {
                 discoveredResources = res.result.resources;
+                document.getElementById('lblResourceCount').innerText = discoveredResources.length;
                 const select = document.getElementById('selectResources');
                 select.innerHTML = '';
-                document.getElementById('lblResourceCount').innerText = discoveredResources.length;
-
                 discoveredResources.forEach(r => {
                     const opt = document.createElement('option');
                     opt.value = r.uri;
-                    opt.innerText = `${r.uri} (${r.name})`;
+                    opt.innerText = `📄 ${r.name || r.uri}`;
                     select.appendChild(opt);
                 });
             }
         }
 
         function onToolSelected() {
-            const toolName = document.getElementById('selectTools').value;
-            const tool = discoveredTools.find(t => t.name === toolName);
-            if (tool && tool.inputSchema) {
-                // Construct sample argument payload from schema
+            const name = document.getElementById('selectTools').value;
+            const tool = discoveredTools.find(t => t.name === name);
+            if (tool && tool.inputSchema && tool.inputSchema.properties) {
                 const sampleArgs = {};
-                if (tool.inputSchema.properties) {
-                    Object.keys(tool.inputSchema.properties).forEach(k => {
-                        const prop = tool.inputSchema.properties[k];
-                        sampleArgs[k] = prop.default !== undefined ? prop.default : (prop.type === 'boolean' ? true : (prop.type === 'integer' || prop.type === 'number' ? 3 : 'sample_value'));
-                    });
+                for (const k in tool.inputSchema.properties) {
+                    if (k === 'count') sampleArgs[k] = 5;
+                    else if (k === 'amount') sampleArgs[k] = 500;
+                    else sampleArgs[k] = "sample_value";
                 }
                 document.getElementById('txtArguments').value = JSON.stringify(sampleArgs, null, 2);
+            } else {
+                document.getElementById('txtArguments').value = '{}';
             }
         }
 
         function onResourceSelected() {
             const uri = document.getElementById('selectResources').value;
-            if (uri && uri.startsWith('ui://')) {
-                readResourceByUri(uri);
+            if (uri.startsWith('ui://')) {
+                renderMcpAppIframe(uri);
             }
         }
 
         async function executeSelectedTool() {
             const toolName = document.getElementById('selectTools').value;
-            if (!toolName) return;
+            if (!toolName) { alert('No tool selected!'); return; }
 
             let args = {};
             try {
                 args = JSON.parse(document.getElementById('txtArguments').value);
             } catch (e) {
-                alert('Invalid JSON in Arguments field!');
-                return;
+                alert('Invalid JSON in Arguments textarea!'); return;
             }
 
-            const params = { name: toolName, arguments: args };
-
-            // Inject out-of-band _meta if checked
-            if (document.getElementById('chkUseMeta').checked) {
-                params._meta = {
-                    client_id: document.getElementById('metaClientId').value,
-                    user_id: document.getElementById('metaUserId').value,
-                    tenant_id: document.getElementById('metaTenantId').value,
-                    trace_id: document.getElementById('metaTraceId').value
-                };
-            }
-
-            const res = await sendRpcRequest('tools/call', params);
-            
-            // Check if tool returned an Embedded MCP App UI component
+            const res = await sendRpcRequest('tools/call', { name: toolName, arguments: args });
             if (res && res.result && res.result.content) {
-                res.result.content.forEach(item => {
-                    if (item.type === 'resource' && item.resource && item.resource.mimeType === 'text/html;profile=mcp-app') {
-                        renderMcpAppWidget(item.resource.text);
+                res.result.content.forEach(c => {
+                    if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') {
+                        renderMcpAppIframeContent(c.resource.text);
                     }
                 });
             }
@@ -427,27 +522,190 @@
 
         async function readSelectedResource() {
             const uri = document.getElementById('selectResources').value;
-            if (!uri) return;
-            readResourceByUri(uri);
-        }
+            if (!uri) { alert('No resource selected!'); return; }
 
-        async function readResourceByUri(uri) {
             const res = await sendRpcRequest('resources/read', { uri: uri });
-            if (res && res.result && res.result.contents && res.result.contents.length > 0) {
-                const item = res.result.contents[0];
-                if (item.mimeType === 'text/html;profile=mcp-app' || item.uri.startsWith('ui://')) {
-                    renderMcpAppWidget(item.text);
-                }
+            if (res && res.result && res.result.contents) {
+                res.result.contents.forEach(c => {
+                    if (c.mimeType === 'text/html;profile=mcp-app') {
+                        renderMcpAppIframeContent(c.text);
+                    }
+                });
             }
         }
 
-        function renderMcpAppWidget(htmlContent) {
-            const placeholder = document.getElementById('appPlaceholder');
+        function renderMcpAppIframeContent(htmlContent) {
             const iframe = document.getElementById('appIframe');
+            const placeholder = document.getElementById('appPlaceholder');
             placeholder.style.display = 'none';
             iframe.style.display = 'block';
             iframe.srcdoc = htmlContent;
             appendLog('log-info', '🖥️ RENDERING FORMAL MCP APP WIDGET', 'Embedded HTML/JS component rendered into iframe container (text/html;profile=mcp-app)');
+        }
+
+        async function renderMcpAppIframe(uri) {
+            await readSelectedResource();
+        }
+
+        // =========================================================================
+        // AI ASSISTANT CHAT ENGINE
+        // =========================================================================
+        function appendChatMessage(sender, text, toolCall = null, toolResult = null, mcpAppHtml = null) {
+            const chatBox = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = sender === 'user' ? 'msg msg-user' : 'msg msg-assistant';
+
+            const header = document.createElement('div');
+            header.className = 'msg-header';
+            header.innerText = sender === 'user' ? '👤 User Presenter' : '🤖 MCP AI Assistant';
+            msgDiv.appendChild(header);
+
+            const body = document.createElement('div');
+            body.innerText = text;
+            msgDiv.appendChild(body);
+
+            if (toolCall) {
+                const card = document.createElement('div');
+                card.className = 'tool-call-card';
+                card.innerText = `⚡ Executing Tool RPC: ${toolCall.name}(${JSON.stringify(toolCall.args)})`;
+                msgDiv.appendChild(card);
+            }
+
+            if (toolResult) {
+                const resCard = document.createElement('div');
+                resCard.className = 'tool-res-card';
+                resCard.innerText = `📥 Result: ${typeof toolResult === 'object' ? JSON.stringify(toolResult, null, 2) : toolResult}`;
+                msgDiv.appendChild(resCard);
+            }
+
+            if (mcpAppHtml) {
+                const appBox = document.createElement('div');
+                appBox.style.marginTop = '10px';
+                appBox.style.height = '300px';
+                appBox.style.border = '2px dashed var(--accent-magenta)';
+                appBox.style.borderRadius = '8px';
+                appBox.style.overflow = 'hidden';
+                
+                const iframe = document.createElement('iframe');
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.srcdoc = mcpAppHtml;
+                appBox.appendChild(iframe);
+                msgDiv.appendChild(appBox);
+            }
+
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('chatInput').value = promptText;
+            handleChatSubmit();
+        }
+
+        async function handleChatSubmit() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            appendChatMessage('user', text);
+
+            if (!eventSource) {
+                appendChatMessage('assistant', '⚠️ Please click "Connect Host RPC" at top right to establish a live connection to an MCP server first.');
+                return;
+            }
+
+            const lower = text.toLowerCase();
+
+            // 1. Discovery intent
+            if (lower.includes('capabilities') || lower.includes('tools') || lower.includes('resources')) {
+                const toolsSummary = discoveredTools.map(t => `• ${t.name}: ${t.description || ''}`).join('\n');
+                const resSummary = discoveredResources.map(r => `• ${r.uri}`).join('\n');
+                appendChatMessage('assistant', `Discovered Registry for server:\n\n🔧 Tools:\n${toolsSummary || 'None'}\n\n📄 Resources:\n${resSummary || 'None'}`);
+                return;
+            }
+
+            // 2. Diagnostic intent
+            if (lower.includes('diagnostic') || lower.includes('report') || lower.includes('count')) {
+                const toolCall = { name: 'get_system_diagnostics', args: { count: 5 } };
+                appendChatMessage('assistant', 'Running system diagnostics tool RPC call...', toolCall);
+                const res = await sendRpcRequest('tools/call', toolCall);
+                if (res && res.result) {
+                    appendChatMessage('assistant', 'Diagnostic check completed successfully!', null, res.result);
+                } else {
+                    appendChatMessage('assistant', 'Diagnostic tool executed. Result logged in inspector.');
+                }
+                return;
+            }
+
+            // 3. Financial transfer intent
+            if (lower.includes('transfer') || lower.includes('fund') || lower.includes('approval')) {
+                const toolCall = { name: 'transfer_funds_with_approval', args: { from_account: 'ACC123', to_account: 'ACC456', amount: 500 } };
+                appendChatMessage('assistant', 'Initiating transfer with human elicitation approval...', toolCall);
+                const res = await sendRpcRequest('tools/call', toolCall);
+                if (res && res.result) {
+                    appendChatMessage('assistant', 'Transfer completed with elicitation check!', null, res.result);
+                }
+                return;
+            }
+
+            // 4. Analytics App intent
+            if (lower.includes('analytics') || lower.includes('app') || lower.includes('widget') || lower.includes('launch')) {
+                appendChatMessage('assistant', 'Fetching formal MCP App widget resource (ui://analytics_app)...');
+                const res = await sendRpcRequest('resources/read', { uri: 'ui://analytics_app' });
+                let appHtml = null;
+                if (res && res.result && res.result.contents) {
+                    res.result.contents.forEach(c => {
+                        if (c.mimeType === 'text/html;profile=mcp-app') appHtml = c.text;
+                    });
+                }
+                if (appHtml) {
+                    appendChatMessage('assistant', 'Here is the interactive MCP Analytics App rendered inline:', null, null, appHtml);
+                } else {
+                    appendChatMessage('assistant', 'Attempting tool launch for analytics app...');
+                    const toolRes = await sendRpcRequest('tools/call', { name: 'launch_analytics_app', arguments: {} });
+                    if (toolRes && toolRes.result && toolRes.result.content) {
+                        toolRes.result.content.forEach(c => {
+                            if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') appHtml = c.resource.text;
+                        });
+                    }
+                    if (appHtml) {
+                        appendChatMessage('assistant', 'Rendered interactive MCP App widget:', null, null, appHtml);
+                    } else {
+                        appendChatMessage('assistant', 'Could not locate an MCP App resource on this server. Switch to Demo 4 (Modern Extensions & MCP Apps) in the dropdown at top right!');
+                    }
+                }
+                return;
+            }
+
+            // 5. Background task intent
+            if (lower.includes('export') || lower.includes('background') || lower.includes('task')) {
+                const toolCall = { name: 'start_background_export_task', args: { export_type: 'csv' } };
+                appendChatMessage('assistant', 'Starting background export task...', toolCall);
+                const res = await sendRpcRequest('tools/call', toolCall);
+                if (res && res.result) {
+                    appendChatMessage('assistant', 'Background task started! Checking status...', null, res.result);
+                    const statusRes = await sendRpcRequest('tools/call', { name: 'get_task_status', arguments: { task_id: 'task_exp_99' } });
+                    if (statusRes && statusRes.result) {
+                        appendChatMessage('assistant', 'Task status retrieved:', null, statusRes.result);
+                    }
+                }
+                return;
+            }
+
+            // Fallback generic execution
+            if (discoveredTools.length > 0) {
+                const tool = discoveredTools[0];
+                const toolCall = { name: tool.name, args: { count: 3 } };
+                appendChatMessage('assistant', `Executing first available tool: ${tool.name}`, toolCall);
+                const res = await sendRpcRequest('tools/call', toolCall);
+                if (res && res.result) {
+                    appendChatMessage('assistant', 'Tool execution finished:', null, res.result);
+                }
+            } else {
+                appendChatMessage('assistant', `Received: "${text}". Connect to an MCP server to run tools and view interactive widgets!`);
+            }
         }
 
         // Listen to postMessage events from embedded MCP Apps
