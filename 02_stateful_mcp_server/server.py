@@ -24,10 +24,12 @@ if user_site and user_site not in sys.path:
     sys.path.insert(0, user_site)
 
 from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.server.lowlevel.server import NotificationOptions
 
-# Initialize FastMCP Server
+# Initialize FastMCP Server with Connection Stateful Configuration
 mcp = FastMCP("Protocol Connection Stateful MCP Server", log_level="WARNING")
+mcp.settings.transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
 # Enable stateful capability declarations in initialize response (tools_changed, resources_changed, prompts_changed)
 _orig_init_options = mcp._mcp_server.create_initialization_options
@@ -240,5 +242,5 @@ if __name__ == "__main__":
     if "--port" in sys.argv:
         port = int(sys.argv[sys.argv.index("--port") + 1])
         mcp.settings.port = port
-        mcp.settings.host = "127.0.0.1"
+        mcp.settings.host = "0.0.0.0"
     mcp.run(transport=transport)

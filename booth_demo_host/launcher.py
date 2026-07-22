@@ -86,12 +86,22 @@ def serve_web_host():
         def log_message(self, format, *args):
             pass  # Quiet HTTP logs
             
+    class ReusableTCPServer(socketserver.TCPServer):
+        allow_reuse_address = True
+
     port = 8000
-    with socketserver.TCPServer(("127.0.0.1", port), QuietHTTPHandler) as httpd:
+    try:
+        httpd = ReusableTCPServer(("0.0.0.0", port), QuietHTTPHandler)
+    except OSError:
+        port = 8080
+        httpd = ReusableTCPServer(("0.0.0.0", port), QuietHTTPHandler)
+
+    with httpd:
         print(f"\n{BOLD}{MAGENTA}========================================================================={RESET}")
         print(f"{BOLD}{YELLOW}🖥️  MCP BOOTH DEMO WEB HOST APPLICATION ONLINE!{RESET}")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}")
-        print(f"👉 Open in browser: {BOLD}{CYAN}http://127.0.0.1:{port}/index.html{RESET}")
+        print(f"👉 Local Access:     {BOLD}{CYAN}http://127.0.0.1:{port}/index.html{RESET}")
+        print(f"👉 Network Access:   {BOLD}{CYAN}http://stenalpjolly.c.googlers.com:{port}/index.html{RESET}")
         print(f"👉 Select any of the 4 MCP Servers in the dropdown to connect live RPC!")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}\n")
         print("Press [CTRL+C] to stop all servers and shutdown host application.\n")

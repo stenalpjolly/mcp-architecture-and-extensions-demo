@@ -24,10 +24,12 @@ if user_site and user_site not in sys.path:
     sys.path.insert(0, user_site)
 
 from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.server.lowlevel.server import NotificationOptions
 
-# Initialize FastMCP Server
-mcp = FastMCP("MCP Request Metadata (_meta) Server", log_level="WARNING")
+# Initialize FastMCP Server with Request Metadata Configuration
+mcp = FastMCP("Request Metadata (_meta) MCP Server", log_level="WARNING")
+mcp.settings.transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
 # Enable notification capabilities in initialization options
 _orig_init_options = mcp._mcp_server.create_initialization_options
@@ -199,5 +201,5 @@ if __name__ == "__main__":
     if "--port" in sys.argv:
         port = int(sys.argv[sys.argv.index("--port") + 1])
         mcp.settings.port = port
-        mcp.settings.host = "127.0.0.1"
+        mcp.settings.host = "0.0.0.0"
     mcp.run(transport=transport)
