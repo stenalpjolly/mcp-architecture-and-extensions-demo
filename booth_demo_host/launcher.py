@@ -114,7 +114,11 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
-        """Proxy JSON-RPC tool/resource messages upstream."""
+        """Proxy JSON-RPC tool/resource messages upstream or route LLM generation requests."""
+        if self.path.startswith("/api/chat/generate"):
+            self._handle_gemini_chat_generate()
+            return
+
         for s in SERVERS:
             route_prefix = f"/api/{s['id']}/messages"
             if self.path.startswith(route_prefix):
@@ -122,6 +126,60 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
                 return
         
         self.send_error(404, "Endpoint not found on proxy.")
+
+    def _send_json_response(self, code: int, data: dict):
+        body = json.dumps(data).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _handle_gemini_chat_generate(self):
+        """Connects live Gemini 2.5 Flash LLM to process user prompts and orchestrate MCP tools."""
+        content_len = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(content_len))
+        
+        prompt = body.get("prompt", "")
+        tools = body.get("tools", [])
+        api_key = body.get("api_key") or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        model_name = body.get("model", "gemini-3.6-flash")
+        
+        if not api_key:
+            self._send_json_response(400, {
+                "error": "No Gemini API Key provided. Please enter a valid API key in the top header or set GEMINI_API_KEY environment variable."
+            })
+            return
+
+        try:
+            from google import genai
+            from google.genai import types
+            
+            client = genai.Client(api_key=api_key)
+            
+            system_instruction = (
+                "You are an expert AI Assistant connected live to an Model Context Protocol (MCP) server over SSE.\n"
+                f"Below are the discovered MCP tools available on the current server:\n{json.dumps(tools, indent=2)}\n\n"
+                "If the user prompt requires running a tool or fetching a resource, output JSON with:\n"
+                '{"reasoning": "<explanation>", "tool_call": {"name": "<tool_name>", "arguments": {<args>}}, "response": "<natural language summary>"}\n'
+                'Otherwise output JSON with: {"reasoning": "<explanation>", "tool_call": null, "response": "<your helpful answer>"}'
+            )
+
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json"
+            )
+
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config
+            )
+
+            res_json = json.loads(response.text)
+            self._send_json_response(200, res_json)
+        except Exception as e:
+            self._send_json_response(500, {"error": str(e)})
 
     def _proxy_sse_request(self, target_port: int, demo_id: str):
         """Streams GET SSE requests upstream and rewrites the message endpoint URL."""
