@@ -173,12 +173,6 @@ def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dy
     </script>
 </body>
 </html>"""
-            }}, '*');
-            alert('Dispatched component event to host interface!');
-        }}
-    </script>
-</body>
-</html>"""
 
 
 HTML_ANALYTICS_APP = build_dynamic_chart_html({"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}, "MCP App: Dynamic Analytics Chart")
