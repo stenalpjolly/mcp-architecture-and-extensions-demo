@@ -82,7 +82,11 @@ def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dy
     if not segments:
         segments = {"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}
 
-    PALETTE = ['#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f97316']
+    PALETTE = [
+        '#4285f4', '#ea4335', '#fbbc05', '#34a853', '#8ab4f8', '#81c995', '#fdd663', '#f28b82',
+        '#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f97316',
+        '#06b6d4', '#84cc16', '#eab308', '#a855f7', '#d946ef', '#0284c7', '#059669', '#d97706'
+    ]
     
     total = sum(segments.values()) if segments else 1.0
     if total <= 0: total = 1.0
@@ -102,12 +106,12 @@ def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dy
         
         svg_circles.append(
             f'<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="{color}" stroke-width="5" '
-            f'stroke-dasharray="{dash_array}" stroke-dashoffset="{dash_offset}"></circle>'
+            f'stroke-dasharray="{dash_array}" stroke-dashoffset="{dash_offset}"><title>{label}: {pct:.1f}%</title></circle>'
         )
         
         legend_items.append(
             f'<div class="legend-item"><span class="legend-color" style="background:{color};"></span>'
-            f'<span>{label}: <strong>{pct:.1f}%</strong></span></div>'
+            f'<span class="legend-label">{label}: <strong>{pct:.1f}%</strong></span></div>'
         )
         
         event_data[label] = f"{pct:.1f}%"
@@ -123,30 +127,35 @@ def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dy
     <meta charset="UTF-8">
     <title>MCP App: {title}</title>
     <style>
-        body {{ font-family: system-ui, -apple-system, sans-serif; background: #090d16; color: #f8fafc; padding: 16px; margin: 0; }}
-        .card {{ background: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }}
-        .header-title {{ font-size: 1.1rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }}
-        .chart-container {{ display: flex; align-items: center; justify-content: space-around; gap: 20px; flex-wrap: wrap; }}
-        .legend {{ display: flex; flex-direction: column; gap: 10px; }}
-        .legend-item {{ display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }}
-        .legend-color {{ width: 14px; height: 14px; border-radius: 4px; }}
-        .btn {{ background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.83rem; margin-top: 14px; transition: all 0.2s; }}
-        .btn:hover {{ background: #1d4ed8; }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ font-family: 'Outfit', system-ui, -apple-system, sans-serif; background: #131314; color: #e3e3e3; padding: 16px; margin: 0; -webkit-font-smoothing: antialiased; }}
+        .card {{ background: #1e1f20; border-radius: 12px; padding: 18px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+        .header-title {{ font-size: 1.05rem; font-weight: 700; color: #8ab4f8; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }}
+        .chart-layout {{ display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }}
+        .donut-wrapper {{ flex-shrink: 0; position: relative; }}
+        .legend-grid {{ flex: 1; display: grid; grid-template-cols: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px 12px; max-height: 180px; overflow-y: auto; padding-right: 6px; }}
+        .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: #282a2c; padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); }}
+        .legend-color {{ width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }}
+        .legend-label {{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c4c7c5; }}
+        .legend-label strong {{ color: #ffffff; }}
+        .btn {{ background: #4285f4; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.82rem; margin-top: 16px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(66,133,244,0.3); }}
+        .btn:hover {{ background: #1a73e8; transform: translateY(-1px); }}
     </style>
 </head>
 <body>
     <div class="card">
         <div class="header-title">📊 {title}</div>
-        <div class="chart-container">
-            <svg width="160" height="160" viewBox="0 0 42 42" class="donut" style="transform: rotate(-90deg);">
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1e293b" stroke-width="5"></circle>
-                {circles_html}
-                <g class="chart-text">
-                    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#f8fafc" font-size="6" font-weight="bold" style="transform: rotate(90deg); transform-origin: center;">100%</text>
-                </g>
-            </svg>
-
-            <div class="legend">
+        <div class="chart-layout">
+            <div class="donut-wrapper">
+                <svg width="150" height="150" viewBox="0 0 42 42" class="donut" style="transform: rotate(-90deg);">
+                    <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#282a2c" stroke-width="5"></circle>
+                    {circles_html}
+                    <g class="chart-text">
+                        <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#e3e3e3" font-size="5.5" font-weight="bold" style="transform: rotate(90deg); transform-origin: center;">100%</text>
+                    </g>
+                </svg>
+            </div>
+            <div class="legend-grid">
                 {legend_html}
             </div>
         </div>
@@ -158,6 +167,12 @@ def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dy
                 type: 'mcp-app-event',
                 event: 'chart_clicked',
                 data: {event_json}
+            }}, '*');
+            alert('Dispatched component state event to host!');
+        }}
+    </script>
+</body>
+</html>"""
             }}, '*');
             alert('Dispatched component event to host interface!');
         }}

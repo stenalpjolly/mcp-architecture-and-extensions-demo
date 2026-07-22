@@ -482,11 +482,12 @@
 
         iframe.mcp-app-frame {
             width: 100%;
-            height: 280px;
+            height: 340px;
             border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius-md);
             margin-top: 12px;
-            background: #ffffff;
+            background: #1e1f20;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
@@ -697,7 +698,12 @@
             }
 
             if (toolResult) {
-                html += `<div class="tool-call-box"><div class="tool-call-header">📥 Result:</div><pre>${JSON.stringify(toolResult, null, 2)}</pre></div>`;
+                const resStr = JSON.stringify(toolResult, null, 2);
+                if (resStr.split('\n').length > 5 || mcpAppHtml) {
+                    html += `<div class="tool-call-box"><details><summary class="tool-call-header" style="cursor:pointer;">📥 View Execution Result Details (${resStr.length} bytes)</summary><pre style="max-height: 180px; overflow: auto; margin-top: 6px;">${resStr}</pre></details></div>`;
+                } else {
+                    html += `<div class="tool-call-box"><div class="tool-call-header">📥 Result:</div><pre>${resStr}</pre></div>`;
+                }
             }
 
             if (mcpAppHtml) {
