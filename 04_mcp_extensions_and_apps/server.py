@@ -77,15 +77,45 @@ SUBSCRIBED_CLIENTS: Dict[str, bool] = {}
 # 1. MCP APPS & INTERACTIVE UI COMPONENTS (ui://)
 # ==============================================================================
 
-def build_dynamic_chart_html(v1: float = 20.0, v2: float = 50.0, v3: float = 30.0, title: str = "Interactive Distribution Chart") -> str:
-    total = v1 + v2 + v3
-    p1 = (v1 / total) * 100.0 if total > 0 else 20.0
-    p2 = (v2 / total) * 100.0 if total > 0 else 50.0
-    p3 = 100.0 - p1 - p2
+def build_dynamic_chart_html(segments: Dict[str, float] = None, title: str = "Dynamic Data Distribution") -> str:
+    """Renders a fully dynamic, multi-segment SVG Donut/Pie chart widget for MCP Apps."""
+    if not segments:
+        segments = {"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}
+
+    PALETTE = ['#38bdf8', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f97316']
     
-    off1 = 25.0
-    off2 = 25.0 - p1
-    off3 = 25.0 - p1 - p2
+    total = sum(segments.values()) if segments else 1.0
+    if total <= 0: total = 1.0
+    
+    svg_circles = []
+    legend_items = []
+    event_data = {}
+    
+    current_offset = 25.0
+    
+    for idx, (label, val) in enumerate(segments.items()):
+        pct = (val / total) * 100.0
+        color = PALETTE[idx % len(PALETTE)]
+        
+        dash_array = f"{pct:.2f} {100.0 - pct:.2f}"
+        dash_offset = f"{current_offset:.2f}"
+        
+        svg_circles.append(
+            f'<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="{color}" stroke-width="5" '
+            f'stroke-dasharray="{dash_array}" stroke-dashoffset="{dash_offset}"></circle>'
+        )
+        
+        legend_items.append(
+            f'<div class="legend-item"><span class="legend-color" style="background:{color};"></span>'
+            f'<span>{label}: <strong>{pct:.1f}%</strong></span></div>'
+        )
+        
+        event_data[label] = f"{pct:.1f}%"
+        current_offset -= pct
+
+    circles_html = "\n                ".join(svg_circles)
+    legend_html = "\n                ".join(legend_items)
+    event_json = json.dumps(event_data)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -110,37 +140,14 @@ def build_dynamic_chart_html(v1: float = 20.0, v2: float = 50.0, v3: float = 30.
         <div class="chart-container">
             <svg width="160" height="160" viewBox="0 0 42 42" class="donut" style="transform: rotate(-90deg);">
                 <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1e293b" stroke-width="5"></circle>
-                
-                <!-- Segment 1 ({p1:.1f}%) -->
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#38bdf8" stroke-width="5"
-                        stroke-dasharray="{p1:.1f} {100-p1:.1f}" stroke-dashoffset="{off1:.1f}"></circle>
-                
-                <!-- Segment 2 ({p2:.1f}%) -->
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="5"
-                        stroke-dasharray="{p2:.1f} {100-p2:.1f}" stroke-dashoffset="{off2:.1f}"></circle>
-                
-                <!-- Segment 3 ({p3:.1f}%) -->
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f59e0b" stroke-width="5"
-                        stroke-dasharray="{p3:.1f} {100-p3:.1f}" stroke-dashoffset="{off3:.1f}"></circle>
-                
+                {circles_html}
                 <g class="chart-text">
                     <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="#f8fafc" font-size="6" font-weight="bold" style="transform: rotate(90deg); transform-origin: center;">100%</text>
                 </g>
             </svg>
 
             <div class="legend">
-                <div class="legend-item">
-                    <span class="legend-color" style="background:#38bdf8;"></span>
-                    <span>Segment 1: <strong>{p1:.1f}%</strong></span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color" style="background:#10b981;"></span>
-                    <span>Segment 2: <strong>{p2:.1f}%</strong></span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color" style="background:#f59e0b;"></span>
-                    <span>Remaining: <strong>{p3:.1f}%</strong></span>
-                </div>
+                {legend_html}
             </div>
         </div>
         <button class="btn" onclick="sendPostMessage()">Submit Component State Event to Host</button>
@@ -150,7 +157,7 @@ def build_dynamic_chart_html(v1: float = 20.0, v2: float = 50.0, v3: float = 30.
             window.parent.postMessage({{
                 type: 'mcp-app-event',
                 event: 'chart_clicked',
-                data: {{ slice_1: '{p1:.1f}%', slice_2: '{p2:.1f}%', slice_remaining: '{p3:.1f}%' }}
+                data: {event_json}
             }}, '*');
             alert('Dispatched component event to host interface!');
         }}
@@ -159,7 +166,7 @@ def build_dynamic_chart_html(v1: float = 20.0, v2: float = 50.0, v3: float = 30.
 </html>"""
 
 
-HTML_ANALYTICS_APP = build_dynamic_chart_html(20.0, 50.0, 30.0, "MCP App: Interactive Analytics Chart")
+HTML_ANALYTICS_APP = build_dynamic_chart_html({"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}, "MCP App: Dynamic Analytics Chart")
 
 
 @mcp.resource("ui://analytics_app", mime_type="text/html;profile=mcp-app")
@@ -169,13 +176,17 @@ async def get_analytics_ui_app() -> str:
 
 
 @mcp.tool()
-async def generate_ui_chart(slice1_pct: float = 20.0, slice2_pct: float = 50.0, title: str = "Data Distribution Chart", ctx: Context = None) -> list:
-    """Generate an interactive HTML UI widget component displaying a custom percentage chart (e.g. 20%, 50%, and remaining 30%)."""
-    remaining = max(0.0, 100.0 - slice1_pct - slice2_pct)
-    if ctx:
-        await ctx.info(f"Generating UI Chart Component ({slice1_pct}%, {slice2_pct}%, remaining {remaining:.1f}%)")
+async def generate_ui_chart(segments_json: str = '{"Segment 1": 20, "Segment 2": 50, "Remaining": 30}', title: str = "Dynamic Data Distribution Chart", ctx: Context = None) -> list:
+    """Generates an interactive HTML UI component displaying a dynamic chart for any arbitrary segments and percentage values (e.g. '{"Segment A": 20, "Segment B": 50, "Remaining": 30}')."""
+    try:
+        segments_dict = json.loads(segments_json)
+    except Exception:
+        segments_dict = {"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}
         
-    html_content = build_dynamic_chart_html(slice1_pct, slice2_pct, remaining, title)
+    if ctx:
+        await ctx.info(f"Generating Dynamic UI Chart Component with {len(segments_dict)} segments")
+        
+    html_content = build_dynamic_chart_html(segments_dict, title)
     return [
         EmbeddedResource(
             type="resource",
@@ -195,7 +206,7 @@ async def launch_analytics_app(initial_view: str = "chart", slice1: float = 20.0
     if ctx:
         await ctx.info(f"Launching MCP App UI Component ({slice1}%, {slice2}%, remaining {remaining:.1f}%)")
         
-    html_content = build_dynamic_chart_html(slice1, slice2, remaining, "MCP Interactive Distribution Chart")
+    html_content = build_dynamic_chart_html({"Segment 1": slice1, "Segment 2": slice2, "Remaining": remaining}, "MCP Interactive Distribution Chart")
     return [
         EmbeddedResource(
             type="resource",

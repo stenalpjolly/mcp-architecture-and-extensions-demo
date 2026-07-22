@@ -817,10 +817,28 @@
                 return;
             }
 
-            if (lower.includes('chart') || lower.includes('20%') || lower.includes('50%') || lower.includes('remaining') || lower.includes('generate ui')) {
-                const toolCall = { name: 'generate_ui_chart', args: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" } };
-                appendChatMessage('assistant', 'Generating interactive UI SVG chart widget displaying 20%, 50%, and remaining 30%...', toolCall);
-                const toolRes = await sendRpcRequest('tools/call', toolCall);
+            const pctMatches = text.match(/\d+%/g);
+            if (pctMatches || lower.includes('chart') || lower.includes('generate ui') || lower.includes('remaining') || lower.includes('reamining')) {
+                const segments = {};
+                if (pctMatches && pctMatches.length > 0) {
+                    let currentSum = 0;
+                    pctMatches.forEach((m, idx) => {
+                        const val = parseFloat(m.replace('%', ''));
+                        segments[`Segment ${idx + 1}`] = val;
+                        currentSum += val;
+                    });
+                    if ((lower.includes('remaining') || lower.includes('reamining') || currentSum < 100) && currentSum < 100) {
+                        segments['Remaining'] = Math.max(0, 100 - currentSum);
+                    }
+                } else {
+                    segments["Segment 1"] = 20;
+                    segments["Segment 2"] = 50;
+                    segments["Remaining"] = 30;
+                }
+
+                const toolCall = { name: 'generate_ui_chart', args: { segments_json: JSON.stringify(segments), title: "Dynamic Data Distribution Chart" } };
+                appendChatMessage('assistant', `Generating interactive dynamic SVG chart widget with segments: ${JSON.stringify(segments)}...`, toolCall);
+                const toolRes = await sendRpcRequest('tools/call', { name: 'generate_ui_chart', arguments: { segments_json: JSON.stringify(segments), title: "Dynamic Data Distribution Chart" } });
                 let appHtml = null;
                 if (toolRes && toolRes.result && toolRes.result.content) {
                     toolRes.result.content.forEach(c => {
