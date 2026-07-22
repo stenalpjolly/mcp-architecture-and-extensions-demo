@@ -579,11 +579,12 @@
         }
 
         const DEMO_TOOL_PRESETS = {
-            // Demo 5: Remote MCP Server & Streamable HTTP Toolset
-            geocode_address: { address: "1600 Amphitheatre Pkwy, Mountain View, CA" },
-            search_places: { query: "coffee shops", location: "Mountain View, CA" },
-            calculate_route: { origin: "Mountain View, CA", destination: "San Francisco, CA", travel_mode: "driving" },
-            launch_maps_app: { location_name: "Googleplex, Mountain View, CA" },
+            // Demo 5: Remote Dynamic Google Maps MCP Server
+            maps_geocode: { address: "1600 Amphitheatre Pkwy, Mountain View, CA" },
+            maps_places_search: { query: "coffee shops", location: "Mountain View, CA" },
+            maps_directions: { origin: "Mountain View, CA", destination: "San Francisco, CA", mode: "driving" },
+            maps_place_details: { place_id: "ChIJ2eUgeAK6j4ARbn5w_nEZaSg" },
+            maps_elevation: { locations: "37.4220,-122.0841" },
 
             generate_ui_chart: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" },
             add_numbers: { a: 15, b: 27 },
