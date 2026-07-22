@@ -11,7 +11,7 @@
     <style>
         /* ==========================================================================
            TASTEFUL FRONTEND SYSTEM (Minimalist Editorial + Industrial Cybernetic)
-           Palette: 60% Canvas (#090d16), 30% Surface (#0f172a / #1e293b), 10% Accent (#38bdf8 / #10b981)
+           Google Material Dark Palette: 60% Canvas (#131314), 30% Surface (#1e1f20 / #282a2c), 10% Accent (#8ab4f8)
            ========================================================================== */
         :root {
             --bg-canvas: #131314;
@@ -151,7 +151,7 @@
 
         .select-input:focus, .text-input:focus {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.25);
         }
 
         .btn {
@@ -225,25 +225,32 @@
             border-bottom-color: var(--accent-primary);
         }
 
-        /* Main Workspace */
+        /* Main Persistent Workspace Layout */
         main.main-content {
             flex: 1;
             display: flex;
-            flex-direction: column;
             padding: 20px 24px;
             gap: 20px;
-        }
-
-        .workspace-grid {
-            display: grid;
-            grid-template-cols: 1fr 380px;
-            gap: 20px;
-            flex: 1;
             min-height: 0;
         }
 
+        .workspace-main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .persistent-side-pane {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 1024px) {
-            .workspace-grid { grid-template-cols: 1fr; }
+            main.main-content { flex-direction: column; }
+            .persistent-side-pane { width: 100%; }
         }
 
         /* Card Elevation Levels */
@@ -255,6 +262,7 @@
             flex-direction: column;
             overflow: hidden;
             box-shadow: var(--shadow-subtle);
+            height: 100%;
         }
 
         .card-header {
@@ -284,7 +292,7 @@
             flex-direction: column;
             gap: 16px;
             background: var(--bg-canvas);
-            min-h: 480px;
+            min-height: 480px;
             max-height: 600px;
         }
 
@@ -404,8 +412,9 @@
         /* Developer Protocol Inspector View */
         .inspector-grid {
             display: grid;
-            grid-template-cols: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-cols: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            overflow-y: auto;
         }
 
         .code-block {
@@ -417,6 +426,7 @@
             color: #e2e8f0;
             overflow-x: auto;
             border: 1px solid var(--border-subtle);
+            max-height: 240px;
         }
 
         iframe.mcp-app-frame {
@@ -472,21 +482,22 @@
 
     <!-- Top View Selector Tabs -->
     <nav class="view-tabs" data-agent="view-tabs">
-        <button class="tab-btn active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Workspace & Live Side Log</button>
+        <button class="tab-btn active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Workspace</button>
         <button class="tab-btn" id="tabInspector" onclick="switchView('inspector')">⚡ Developer Protocol Inspector</button>
     </nav>
 
-    <!-- Main Content Area -->
+    <!-- Persistent Main Content Workspace Layout -->
     <main class="main-content">
 
-        <!-- Chat Workspace View -->
-        <div id="chatView" class="workspace-grid">
-            <!-- Main AI Chat Workspace -->
-            <div class="surface-card">
+        <!-- Left Flexible Main Workspace Area -->
+        <div class="workspace-main-area">
+
+            <!-- Chat Workspace View -->
+            <div id="chatView" class="surface-card">
                 <div class="card-header">
                     <div class="card-title">
                         <span>💬 AI Assistant Workspace</span>
-                        <span style="font-size:0.75rem; font-weight:normal; color:var(--accent-primary); background:rgba(56,189,248,0.1); padding:2px 8px; border-radius:4px;">Gemini 3.6 Flash Connected</span>
+                        <span style="font-size:0.75rem; font-weight:normal; color:var(--accent-primary); background:rgba(138,180,248,0.12); padding:2px 8px; border-radius:4px;">Gemini 3.6 Flash Connected</span>
                     </div>
                     <button class="btn btn-secondary" onclick="clearChatThread()" style="padding: 4px 10px; font-size: 0.78rem;">🧹 Clear Chat</button>
                 </div>
@@ -514,7 +525,30 @@
                 </div>
             </div>
 
-            <!-- Side SSE Inspector Log -->
+            <!-- Developer Protocol Inspector View -->
+            <div id="inspectorView" class="inspector-grid" style="display: none;">
+                <div class="surface-card">
+                    <div class="card-header"><div class="card-title">📡 Discovered Tools</div></div>
+                    <div style="padding: 16px;"><pre class="code-block" id="toolsDisplay">No connection initialized.</pre></div>
+                </div>
+                <div class="surface-card">
+                    <div class="card-header"><div class="card-title">📄 Discovered Resources</div></div>
+                    <div style="padding: 16px;"><pre class="code-block" id="resourcesDisplay">No connection initialized.</pre></div>
+                </div>
+                <div class="surface-card">
+                    <div class="card-header"><div class="card-title">💡 Discovered Prompts</div></div>
+                    <div style="padding: 16px;"><pre class="code-block" id="promptsDisplay">No connection initialized.</pre></div>
+                </div>
+                <div class="surface-card">
+                    <div class="card-header"><div class="card-title">🔑 Client Capabilities</div></div>
+                    <div style="padding: 16px;"><pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Persistent Right Side Live SSE Inspector Log (Pinned across BOTH views) -->
+        <div class="persistent-side-pane">
             <div class="surface-card">
                 <div class="card-header">
                     <div class="card-title">⚡ Live Smart SSE Inspector</div>
@@ -523,26 +557,6 @@
                 <div class="sse-log-box" id="sseLogBox">
                     <div class="log-entry log-info">[SYSTEM INITIALIZED] Awaiting host connection...</div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Developer Protocol Inspector View -->
-        <div id="inspectorView" class="inspector-grid" style="display: none;">
-            <div class="surface-card">
-                <div class="card-header"><div class="card-title">📡 Discovered Tools</div></div>
-                <div style="padding: 16px;"><pre class="code-block" id="toolsDisplay">No connection initialized.</pre></div>
-            </div>
-            <div class="surface-card">
-                <div class="card-header"><div class="card-title">📄 Discovered Resources</div></div>
-                <div style="padding: 16px;"><pre class="code-block" id="resourcesDisplay">No connection initialized.</pre></div>
-            </div>
-            <div class="surface-card">
-                <div class="card-header"><div class="card-title">💡 Discovered Prompts</div></div>
-                <div style="padding: 16px;"><pre class="code-block" id="promptsDisplay">No connection initialized.</pre></div>
-            </div>
-            <div class="surface-card">
-                <div class="card-header"><div class="card-title">🔑 Client Capabilities</div></div>
-                <div style="padding: 16px;"><pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre></div>
             </div>
         </div>
 
@@ -579,7 +593,7 @@
         function switchView(viewName) {
             document.getElementById('tabChat').classList.toggle('active', viewName === 'chat');
             document.getElementById('tabInspector').classList.toggle('active', viewName === 'inspector');
-            document.getElementById('chatView').style.display = (viewName === 'chat') ? 'grid' : 'none';
+            document.getElementById('chatView').style.display = (viewName === 'chat') ? 'flex' : 'none';
             document.getElementById('inspectorView').style.display = (viewName === 'inspector') ? 'grid' : 'none';
         }
 
