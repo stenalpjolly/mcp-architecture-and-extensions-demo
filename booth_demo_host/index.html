@@ -570,15 +570,56 @@
             }
         }
 
+        const DEMO_TOOL_PRESETS = {
+            // Demo 4: Modern Extensions & MCP Apps
+            launch_analytics_app: { initial_view: "revenue", export_enabled: true },
+            transfer_funds_with_approval: { from_account: "ACC-1001-USD", to_account: "ACC-2002-EUR", amount: 750.00, currency: "USD" },
+            start_background_export_task: { export_type: "csv", time_range: "last_30_days" },
+            get_task_status: { task_id: "task_exp_99" },
+
+            // Demo 1: Stateless MCP Server
+            get_system_diagnostics: { count: 5, include_logs: true },
+            calculate_tax: { amount: 1500, tax_rate: 0.15 },
+            convert_units: { value: 100, from_unit: "miles", to_unit: "km" },
+
+            // Demo 2: Stateful Server
+            create_note: { title: "Q3 Architecture Review", content: "MCP Apps standard graduated to formal ui:// text/html;profile=mcp-app protocol." },
+            toggle_admin_mode: { enable: true },
+            bulk_import_sample_notes: { count: 3 },
+
+            // Demo 3: Metadata Context Server
+            admin_system_diagnostics: { depth: "full", include_audit_trail: true }
+        };
+
+        function getSmartDemoValue(key) {
+            const k = key.toLowerCase();
+            if (k.includes('view')) return "revenue";
+            if (k.includes('enable') || k.includes('active')) return true;
+            if (k.includes('count') || k.includes('limit') || k.includes('depth')) return 5;
+            if (k.includes('amount') || k.includes('price') || k.includes('value')) return 750.00;
+            if (k.includes('from_account') || k === 'from') return "ACC-1001-USD";
+            if (k.includes('to_account') || k === 'to') return "ACC-2002-EUR";
+            if (k.includes('title')) return "Q3 Architecture Review";
+            if (k.includes('content') || k.includes('text')) return "FastMCP SSE Transport connected over Port 8000.";
+            if (k.includes('export') || k.includes('format')) return "csv";
+            if (k.includes('currency')) return "USD";
+            if (k.includes('task_id') || k.includes('id')) return "task_exp_99";
+            return "demo_value";
+        }
+
         function onToolSelected() {
             const name = document.getElementById('selectTools').value;
             const tool = discoveredTools.find(t => t.name === name);
+
+            if (DEMO_TOOL_PRESETS[name]) {
+                document.getElementById('txtArguments').value = JSON.stringify(DEMO_TOOL_PRESETS[name], null, 2);
+                return;
+            }
+
             if (tool && tool.inputSchema && tool.inputSchema.properties) {
                 const sampleArgs = {};
                 for (const k in tool.inputSchema.properties) {
-                    if (k === 'count') sampleArgs[k] = 5;
-                    else if (k === 'amount') sampleArgs[k] = 500;
-                    else sampleArgs[k] = "sample_value";
+                    sampleArgs[k] = getSmartDemoValue(k);
                 }
                 document.getElementById('txtArguments').value = JSON.stringify(sampleArgs, null, 2);
             } else {
