@@ -147,10 +147,18 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
                         line_str = line_str.replace("data: /messages", f"data: /api/{demo_id}/messages")
                         line = line_str.encode("utf-8")
                     
-                    self.wfile.write(line)
-                    self.wfile.flush()
+                    try:
+                        self.wfile.write(line)
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError):
+                        break
+        except (BrokenPipeError, ConnectionResetError):
+            pass
         except Exception as e:
-            self.send_error(502, f"Bad Gateway (Proxy -> Server Port {target_port}): {e}")
+            try:
+                self.send_error(502, f"Bad Gateway (Proxy -> Server Port {target_port}): {e}")
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
     def _proxy_message_request(self, target_port: int, demo_id: str):
         """Forwards POST JSON-RPC payloads upstream."""
@@ -206,8 +214,7 @@ def serve_unified_proxy_host():
         print(f"\n{BOLD}{MAGENTA}========================================================================={RESET}")
         print(f"{BOLD}{YELLOW}🖥️  UNIFIED REVERSE PROXY & BOOTH DEMO HOST APPLICATION ONLINE!{RESET}")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}")
-        print(f"👉 Local Access:     {BOLD}{CYAN}http://127.0.0.1:{port}/index.html{RESET}")
-        print(f"👉 Network Access:   {BOLD}{CYAN}http://stenalpjolly.c.googlers.com:{port}/index.html{RESET}")
+        print(f"👉 Web Dashboard Access: {BOLD}{CYAN}http://127.0.0.1:{port}/index.html{RESET}")
         print(f"👉 Unified Single-Port Architecture: All 4 MCP Servers proxied over Port {port}!")
         print(f"{BOLD}{MAGENTA}========================================================================={RESET}\n")
         print("Press [CTRL+C] to stop all servers and shutdown host application.\n")
