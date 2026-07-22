@@ -69,6 +69,12 @@ SERVERS = [
         "name": "🚀 Demo 4: Modern Spec Extensions & Formal MCP Apps Server",
         "path": os.path.join(DEMO_DIR, "04_mcp_extensions_and_apps", "server.py"),
         "port": 8004
+    },
+    {
+        "id": "demo5",
+        "name": "🗺️ Demo 5: Remote Streamable HTTP Server & Maps Toolset",
+        "path": os.path.join(DEMO_DIR, "05_remote_mcp_server_and_toolset", "server.py"),
+        "port": 8005
     }
 ]
 
@@ -76,7 +82,7 @@ processes = []
 
 
 def launch_mcp_servers():
-    print(f"\n{BOLD}{CYAN}🚀 Launching 4 Internal MCP SSE Backend Servers...{RESET}\n")
+    print(f"\n{BOLD}{CYAN}🚀 Launching 5 Internal MCP SSE Backend Servers...{RESET}\n")
     
     env = {**os.environ}
     if user_site:

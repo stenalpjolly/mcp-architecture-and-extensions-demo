@@ -129,9 +129,10 @@
 
             <select class="server-select" id="serverSelect">
                 <option value="/api/demo1">⚡ Demo 1: Stateless MCP Server</option>
-                <option value="/api/demo2" selected>📡 Demo 2: Option 1 Protocol Connection Stateful Server</option>
+                <option value="/api/demo2">📡 Demo 2: Option 1 Protocol Connection Stateful Server</option>
                 <option value="/api/demo3">🔐 Demo 3: Out-of-Band _meta Request Metadata Server</option>
                 <option value="/api/demo4">🚀 Demo 4: Modern Spec Extensions & Formal MCP Apps</option>
+                <option value="/api/demo5" selected>🗺️ Demo 5: Remote Streamable HTTP Server & Maps Toolset</option>
             </select>
             <button class="btn-action" id="btnConnect" onclick="toggleConnect()">Connect Host RPC</button>
         </div>
@@ -578,6 +579,12 @@
         }
 
         const DEMO_TOOL_PRESETS = {
+            // Demo 5: Remote MCP Server & Streamable HTTP Toolset
+            geocode_address: { address: "1600 Amphitheatre Pkwy, Mountain View, CA" },
+            search_places: { query: "coffee shops", location: "Mountain View, CA" },
+            calculate_route: { origin: "Mountain View, CA", destination: "San Francisco, CA", travel_mode: "driving" },
+            launch_maps_app: { location_name: "Googleplex, Mountain View, CA" },
+
             generate_ui_chart: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" },
             add_numbers: { a: 15, b: 27 },
             launch_analytics_app: { initial_view: "chart", slice1: 20, slice2: 50 },
