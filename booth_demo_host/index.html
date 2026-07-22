@@ -3,588 +3,563 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Demo Host - AI Assistant & Live Protocol Stream</title>
+    <title>MCP Architecture & Extensions Demo Host</title>
+    <!-- Google Fonts: Outfit (Display/Sans) + JetBrains Mono (Code/Telemetry) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* ==========================================================================
+           TASTEFUL FRONTEND SYSTEM (Minimalist Editorial + Industrial Cybernetic)
+           Palette: 60% Canvas (#090d16), 30% Surface (#0f172a / #1e293b), 10% Accent (#38bdf8 / #10b981)
+           ========================================================================== */
         :root {
-            --bg-main: #090d16;
-            --bg-card: #0f172a;
-            --bg-panel: #1e293b;
-            --accent-blue: #2563eb;
-            --accent-cyan: #38bdf8;
-            --accent-green: #10b981;
-            --accent-yellow: #f59e0b;
-            --accent-purple: #8b5cf6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --border-subtle: #1e293b;
+            --bg-canvas: #070a12;
+            --bg-surface-l1: #0d1322;
+            --bg-surface-l2: #141c30;
+            --bg-surface-l3: #1c2742;
+            
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-medium: rgba(255, 255, 255, 0.14);
+            --border-accent: rgba(56, 189, 248, 0.35);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --accent-primary: #38bdf8;
+            --accent-primary-hover: #0284c7;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #f43f5e;
+
+            --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-subtle: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg-main); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* Header */
-        header { background: #020617; border-bottom: 1px solid var(--border-subtle); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .logo-group { display: flex; align-items: center; gap: 12px; }
-        .logo-group h1 { font-size: 1.15rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.01em; }
         
-        .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: #1e293b; color: var(--text-muted); }
-        .status-pill.connected { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; }
-        .connected .status-dot { background: #34d399; }
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
 
-        .header-controls { display: flex; align-items: center; gap: 10px; }
-        .api-input { background: #0f172a; border: 1px solid var(--border-color); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.83rem; outline: none; width: 210px; }
-        select.server-select { background: #0f172a; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer; }
-        
-        .btn-action { background: var(--accent-blue); color: white; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
-        .btn-action:hover { background: #1d4ed8; }
-        .btn-disconnect { background: #dc2626; }
-        .btn-disconnect:hover { background: #b91c1c; }
+        /* Header Navigation */
+        header.app-header {
+            background: var(--bg-surface-l1);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(12px);
+        }
 
-        /* Top View Selector Tabs */
-        .view-tabs { display: flex; background: #020617; border-bottom: 1px solid var(--border-subtle); padding: 0 24px; gap: 8px; }
-        .tab-item { background: none; border: none; color: var(--text-muted); padding: 12px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-        .tab-item:hover { color: var(--text-main); }
-        .tab-item.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        /* Main Workspace View Switcher */
-        main { flex: 1; display: flex; overflow: hidden; position: relative; }
-        .view-content { width: 100%; height: 100%; display: none; }
-        .view-content.active { display: flex; }
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), #818cf8);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+        }
 
-        /* ========================================================================= */
-        /* VIEW 1: AI ASSISTANT CHAT WITH LIVE SIDE LOG STREAM */
-        /* ========================================================================= */
-        .chat-workspace-grid { width: 100%; display: grid; grid-template-columns: 1fr 440px; height: 100%; }
-        .chat-main { display: flex; flex-direction: column; height: 100%; padding: 20px; gap: 14px; border-right: 1px solid var(--border-subtle); overflow: hidden; }
-        .chat-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 8px; }
-        
-        .bubble { display: flex; flex-direction: column; gap: 8px; max-width: 90%; border-radius: 12px; padding: 14px 18px; font-size: 0.92rem; line-height: 1.5; }
-        .bubble-user { align-self: flex-end; background: #1e293b; border: 1px solid var(--border-color); color: #f8fafc; }
-        .bubble-assistant { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border-subtle); color: #e2e8f0; width: 100%; }
-        
-        .bubble-header { font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px; }
-        
-        /* Execution Badges */
-        .execution-badge { background: #020617; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.84rem; color: var(--accent-yellow); display: flex; justify-content: space-between; align-items: center; }
-        .result-box { background: #064e3b; border: 1px solid #047857; color: #a7f3d0; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.83rem; white-space: pre-wrap; margin-top: 6px; }
+        .brand-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
 
-        /* Embedded MCP App Container */
-        .mcp-app-card { width: 100%; height: 340px; border: 1px solid var(--border-color); border-radius: 12px; background: #020617; overflow: hidden; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .mcp-app-card iframe { width: 100%; height: 100%; border: none; }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
 
-        /* Preset Chips */
-        .chips-bar { display: flex; gap: 8px; flex-wrap: wrap; }
-        .action-chip { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-        .action-chip:hover { background: var(--bg-panel); border-color: var(--accent-cyan); transform: translateY(-1px); }
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg-surface-l2);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
 
-        /* Input Box */
-        .chat-input-wrapper { display: flex; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-        .chat-input-field { flex: 1; background: transparent; border: none; color: white; font-size: 0.93rem; outline: none; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-danger);
+        }
+        .status-dot.online {
+            background: var(--accent-success);
+            box-shadow: 0 0 10px var(--accent-success);
+        }
 
-        /* ========================================================================= */
-        /* VIEW 2: DEVELOPER PROTOCOL INSPECTOR */
-        /* ========================================================================= */
-        .inspector-grid { width: 100%; display: grid; grid-template-columns: 320px 1fr 440px; height: 100%; }
-        .pane { background: var(--bg-card); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; overflow: hidden; }
-        .pane-title { padding: 12px 16px; background: #020617; border-bottom: 1px solid var(--border-subtle); font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; }
-        .pane-body { padding: 16px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .select-input, .text-input {
+            background: var(--bg-surface-l2);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all var(--transition-fast);
+        }
 
-        .field-group { display: flex; flex-direction: column; gap: 6px; }
-        .field-group label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-        textarea.code-box { background: #020617; color: var(--accent-cyan); border: 1px solid var(--border-color); padding: 10px; font-family: monospace; font-size: 0.83rem; border-radius: 8px; resize: vertical; min-height: 100px; }
+        .select-input:focus, .text-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
 
-        /* Collapsible Accordion */
-        details.meta-accordion { background: #020617; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; }
-        details.meta-accordion summary { cursor: pointer; font-size: 0.83rem; font-weight: 600; color: var(--accent-yellow); outline: none; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.83rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all var(--transition-fast);
+        }
 
-        /* Stream Log */
-        .log-terminal { background: #020617; border: 1px solid var(--border-subtle); font-family: monospace; font-size: 0.82rem; padding: 14px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .log-req { color: var(--accent-cyan); }
-        .log-res { color: var(--accent-green); }
-        .log-stream { color: var(--accent-purple); }
-        .log-err { color: #f87171; }
-        .log-info { color: var(--text-muted); }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--bg-canvas), 0 0 0 4px var(--accent-primary);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: #040914;
+        }
+        .btn-primary:hover {
+            background: var(--accent-primary-hover);
+            color: #ffffff;
+        }
+
+        .btn-secondary {
+            background: var(--bg-surface-l2);
+            color: var(--text-primary);
+            border-color: var(--border-subtle);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-surface-l3);
+            border-color: var(--border-medium);
+        }
+
+        /* Top View Tabs */
+        nav.view-tabs {
+            display: flex;
+            background: var(--bg-surface-l1);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 24px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition-fast);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        /* Main Workspace */
+        main.main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 24px;
+            gap: 20px;
+        }
+
+        .workspace-grid {
+            display: grid;
+            grid-template-cols: 1fr 380px;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace-grid { grid-template-cols: 1fr; }
+        }
+
+        /* Card Elevation Levels */
+        .surface-card {
+            background: var(--bg-surface-l1);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .card-header {
+            padding: 14px 18px;
+            background: var(--bg-surface-l2);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Chat Messages Workspace */
+        .chat-messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: var(--bg-canvas);
+            min-h: 480px;
+            max-height: 600px;
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background: var(--bg-surface-l1);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--bg-surface-l2);
+            border: 1px solid var(--border-accent);
+            color: var(--text-primary);
+        }
+
+        .tool-call-box {
+            margin-top: 10px;
+            background: var(--bg-surface-l2);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        .tool-call-header {
+            color: var(--accent-primary);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        /* Action Chips */
+        .action-chips {
+            display: flex;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--bg-surface-l1);
+            border-top: 1px solid var(--border-subtle);
+            overflow-x: auto;
+        }
+
+        .chip {
+            background: var(--bg-surface-l2);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition-fast);
+        }
+
+        .chip:hover {
+            background: var(--bg-surface-l3);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            padding: 16px 18px;
+            background: var(--bg-surface-l1);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-textarea {
+            flex: 1;
+            background: var(--bg-surface-l2);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            resize: none;
+            outline: none;
+        }
+
+        .chat-textarea:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Side SSE Inspector Log */
+        .sse-log-box {
+            flex: 1;
+            background: var(--bg-canvas);
+            padding: 14px;
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            color: #cbd5e1;
+            overflow-y: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 680px;
+        }
+
+        .log-entry { margin-bottom: 10px; border-bottom: 1px dashed var(--border-subtle); padding-bottom: 6px; }
+        .log-info { color: var(--accent-primary); }
+        .log-success { color: var(--accent-success); }
+        .log-err { color: var(--accent-danger); }
+
+        /* Developer Protocol Inspector View */
+        .inspector-grid {
+            display: grid;
+            grid-template-cols: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .code-block {
+            background: var(--bg-canvas);
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            border: 1px solid var(--border-subtle);
+        }
+
+        iframe.mcp-app-frame {
+            width: 100%;
+            height: 280px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+            background: #ffffff;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header>
-        <div class="logo-group">
-            <span style="font-size:1.3rem;">📡</span>
-            <h1>MCP Demo Host & App Launcher</h1>
-            <div class="status-pill" id="statusPill">
-                <span class="status-dot"></span>
-                <span id="statusText">Disconnected</span>
+    <!-- Header Navigation Bar -->
+    <header class="app-header" data-agent="header-nav">
+        <div class="brand-block">
+            <div class="brand-logo">⚡</div>
+            <div>
+                <div class="brand-title">MCP Architecture & Extensions Host</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Unified SSE RPC Proxy Dashboard</div>
             </div>
         </div>
 
         <div class="header-controls">
-            <input type="password" class="api-input" id="geminiApiKey" placeholder="🔑 Enter Gemini API Key...">
-            <select class="server-select" id="geminiModel" style="color:var(--accent-yellow);">
+            <!-- Server Selector -->
+            <select class="select-input" id="serverSelect" data-agent="server-select" style="max-width: 280px;">
+                <option value="/api/demo1">⚡ Demo 1: Stateless MCP Server</option>
+                <option value="/api/demo2">📡 Demo 2: Stateful MCP Server</option>
+                <option value="/api/demo3">🔐 Demo 3: Request Metadata Server</option>
+                <option value="/api/demo4">🚀 Demo 4: Modern Spec Extensions & Apps</option>
+                <option value="/api/demo5" selected>🗺️ Demo 5: Remote Streamable MCP & ADK Toolsets</option>
+            </select>
+
+            <!-- Status Indicator -->
+            <div class="status-badge">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+
+            <!-- Connect Button -->
+            <button class="btn btn-primary" id="btnConnect" onclick="toggleConnect()" data-agent="connect-btn">Connect Host RPC</button>
+
+            <!-- Model Selection -->
+            <select class="select-input" id="geminiModel" style="width: 160px;">
                 <option value="gemini-3.6-flash" selected>Gemini 3.6 Flash</option>
             </select>
 
-            <select class="server-select" id="serverSelect">
-                <option value="/api/demo1">⚡ Demo 1: Stateless MCP Server</option>
-                <option value="/api/demo2">📡 Demo 2: Option 1 Protocol Connection Stateful Server</option>
-                <option value="/api/demo3">🔐 Demo 3: Out-of-Band _meta Request Metadata Server</option>
-                <option value="/api/demo4">🚀 Demo 4: Modern Spec Extensions & Formal MCP Apps</option>
-                <option value="/api/demo5" selected>🗺️ Demo 5: Remote Streamable HTTP Server & Maps Toolset</option>
-            </select>
-            <button class="btn-action" id="btnConnect" onclick="toggleConnect()">Connect Host RPC</button>
+            <!-- Host Key Input -->
+            <input type="password" class="text-input" id="geminiApiKey" placeholder="API Key (Auto-detected on Host)" style="width: 180px;">
         </div>
     </header>
 
     <!-- Top View Selector Tabs -->
-    <nav class="view-tabs">
-        <button class="tab-item active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Workspace & Live Side Log</button>
-        <button class="tab-item" id="tabInspector" onclick="switchView('inspector')">🔬 Developer Protocol Inspector</button>
+    <nav class="view-tabs" data-agent="view-tabs">
+        <button class="tab-btn active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Workspace & Live Side Log</button>
+        <button class="tab-btn" id="tabInspector" onclick="switchView('inspector')">⚡ Developer Protocol Inspector</button>
     </nav>
 
-    <main>
-        <!-- ========================================================================= -->
-        <!-- VIEW 1: AI ASSISTANT CHAT WITH LIVE SIDE LOG STREAM -->
-        <!-- ========================================================================= -->
-        <div class="view-content active" id="viewChat">
-            <div class="chat-workspace-grid">
-                <!-- Left: Chat Thread & Input -->
-                <div class="chat-main">
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:4px;">
-                        <span style="font-size:0.8rem; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:0.05em;">💬 Conversation History</span>
-                        <button style="background:#0f172a; border:1px solid var(--border-color); color:var(--text-muted); padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s;" onclick="clearChatThread()" onmouseover="this.style.color='#f87171';this.style.borderColor='#f87171'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-color)'">🧹 Clear Chat</button>
-                    </div>
+    <!-- Main Content Area -->
+    <main class="main-content">
 
-                    <div class="chat-thread" id="chatThread">
-                        <div class="bubble bubble-assistant">
-                            <div class="bubble-header">🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash Connected)</div>
-                            Welcome! I am connected to your live MCP server over HTTP SSE RPC transport. How can I assist you today?
-                            <div style="margin-top:6px; font-size:0.83rem; color:var(--text-muted);">
-                                💡 <strong>Tip:</strong> Enter your Gemini API Key in the top header bar to enable live <strong>Gemini 3.6 Flash</strong> reasoning, tool orchestration, and automatic MCP App widget rendering!
-                            </div>
-                        </div>
+        <!-- Chat Workspace View -->
+        <div id="chatView" class="workspace-grid">
+            <!-- Main AI Chat Workspace -->
+            <div class="surface-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>💬 AI Assistant Workspace</span>
+                        <span style="font-size:0.75rem; font-weight:normal; color:var(--accent-primary); background:rgba(56,189,248,0.1); padding:2px 8px; border-radius:4px;">Gemini 3.6 Flash Connected</span>
                     </div>
+                    <button class="btn btn-secondary" onclick="clearChatThread()" style="padding: 4px 10px; font-size: 0.78rem;">🧹 Clear Chat</button>
+                </div>
 
-                    <!-- Preset Action Chips -->
-                    <div class="chips-bar">
-                        <div class="action-chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discovered Registry</div>
-                        <div class="action-chip" onclick="sendQuickPrompt('Run system diagnostic report with count 5')">⚡ System Diagnostic</div>
-                        <div class="action-chip" onclick="sendQuickPrompt('Transfer $500 from ACC123 to ACC456 with approval')">💸 Transfer Funds</div>
-                        <div class="action-chip" onclick="sendQuickPrompt('Launch the analytics dashboard app')">📊 Launch MCP Analytics App</div>
-                        <div class="action-chip" onclick="sendQuickPrompt('Start background export task and check status')">⏳ Background Export Task</div>
-                    </div>
-
-                    <!-- Chat Input Box -->
-                    <div class="chat-input-wrapper">
-                        <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask Gemini 3.6 Flash to execute MCP tools or launch interactive apps..." onkeypress="if(event.key === 'Enter') handleChatSubmit()">
-                        <button class="btn-action" onclick="handleChatSubmit()">Send</button>
+                <!-- Messages Output Container -->
+                <div class="chat-messages-container" id="chatMessages">
+                    <div class="chat-bubble assistant">
+                        <strong>🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash)</strong><br>
+                        Welcome! I am connected to your live MCP server over HTTP SSE RPC transport. How can I assist you today?
                     </div>
                 </div>
 
-                <!-- Right: Live Side Log Stream Panel -->
-                <section class="pane" style="border-right:none;">
-                    <div class="pane-title">
-                        <span>📡 Live Smart SSE Inspector</span>
-                        <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
-                    </div>
-                    <div class="pane-body" style="padding:0;">
-                        <div class="log-terminal" id="terminalLogChat">
-                            <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
-                        </div>
-                    </div>
-                </section>
+                <!-- Prompt Preset Chips -->
+                <div class="action-chips" id="actionChips">
+                    <div class="chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discover Capabilities</div>
+                    <div class="chip" onclick="sendQuickPrompt('generate_ui_chart with 20% and 50% and remaining')">📊 Dynamic UI Donut Chart</div>
+                    <div class="chip" onclick="sendQuickPrompt('maps_geocode_toolset address: 1600 Amphitheatre Pkwy Mountain View CA')">🗺️ Maps Geocode Toolset</div>
+                    <div class="chip" onclick="sendQuickPrompt('bigquery_query_toolset SELECT count(*) FROM bigquery-public-data')">📊 BigQuery ADK Toolset</div>
+                </div>
+
+                <!-- Chat Input Controls -->
+                <div class="chat-input-area">
+                    <textarea class="chat-textarea" id="chatInput" rows="2" placeholder="Ask Gemini 3.6 Flash to execute MCP tools or launch interactive apps..."></textarea>
+                    <button class="btn btn-primary" id="btnSendChat" onclick="handleChatSubmit()" style="align-self: flex-end; padding: 12px 20px;">Send</button>
+                </div>
+            </div>
+
+            <!-- Side SSE Inspector Log -->
+            <div class="surface-card">
+                <div class="card-header">
+                    <div class="card-title">⚡ Live Smart SSE Inspector</div>
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">ID #1</span>
+                </div>
+                <div class="sse-log-box" id="sseLogBox">
+                    <div class="log-entry log-info">[SYSTEM INITIALIZED] Awaiting host connection...</div>
+                </div>
             </div>
         </div>
 
-        <!-- ========================================================================= -->
-        <!-- VIEW 2: DEVELOPER PROTOCOL INSPECTOR -->
-        <!-- ========================================================================= -->
-        <div class="view-content" id="viewInspector">
-            <div class="inspector-grid">
-                <!-- Column 1: Capabilities & Registry -->
-                <section class="pane">
-                    <div class="pane-title">
-                        <span>📋 Capabilities & Registry</span>
-                        <button style="background:none;border:none;color:var(--accent-cyan);cursor:pointer;" onclick="refreshRegistry()">🔄</button>
-                    </div>
-                    <div class="pane-body">
-                        <div class="field-group">
-                            <label>Server Info & Capabilities</label>
-                            <textarea class="code-box" id="txtCapabilities" readonly style="height: 120px; color: var(--text-main);"></textarea>
-                        </div>
-
-                        <div class="field-group">
-                            <label>Discovered Tools (<span id="lblToolCount">0</span>)</label>
-                            <select id="selectTools" size="5" onchange="onToolSelected()" style="background:#020617; border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); padding:8px; font-size:0.85rem;"></select>
-                        </div>
-
-                        <div class="field-group">
-                            <label>Discovered Resources (<span id="lblResourceCount">0</span>)</label>
-                            <select id="selectResources" size="4" onchange="onResourceSelected()" style="background:#020617; border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); padding:8px; font-size:0.85rem;"></select>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Column 2: Tool Execution & MCP App Widget Preview -->
-                <section class="pane">
-                    <div class="pane-title">
-                        <span>⚡ RPC Execution & MCP App Container</span>
-                    </div>
-                    <div class="pane-body">
-                        <div class="field-group">
-                            <label>Tool Arguments JSON (`arguments`)</label>
-                            <textarea class="code-box" id="txtArguments">{\n  "count": 3\n}</textarea>
-                        </div>
-
-                        <!-- Collapsible Metadata Accordion -->
-                        <details class="meta-accordion">
-                            <summary>⚙️ Advanced Request Context (`_meta` Parameters)</summary>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-                                <input type="text" id="metaClientId" value="client_booth_demo_99" placeholder="client_id" style="background:#0f172a;border:1px solid var(--border-color);color:white;padding:6px 10px;border-radius:6px;font-size:0.83rem;">
-                                <input type="text" id="metaUserId" value="user_stenalp_42" placeholder="user_id" style="background:#0f172a;border:1px solid var(--border-color);color:white;padding:6px 10px;border-radius:6px;font-size:0.83rem;">
-                                <input type="text" id="metaTenantId" value="tenant_acme_corp" placeholder="tenant_id" style="background:#0f172a;border:1px solid var(--border-color);color:white;padding:6px 10px;border-radius:6px;font-size:0.83rem;">
-                                <input type="text" id="metaTraceId" value="tr_booth_7701a" placeholder="trace_id" style="background:#0f172a;border:1px solid var(--border-color);color:white;padding:6px 10px;border-radius:6px;font-size:0.83rem;">
-                            </div>
-                        </details>
-
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn-action" style="flex:1;" onclick="executeSelectedTool()">Execute Tool RPC (`tools/call`)</button>
-                            <button class="btn-action" style="background:#059669;" onclick="readSelectedResource()">Read Resource (`resources/read`)</button>
-                        </div>
-
-                        <div class="field-group" style="margin-top: 10px;">
-                            <label style="color: var(--accent-purple);">🖥️ Embedded MCP App Webview Frame (`ui://` Container)</label>
-                            <div class="mcp-app-card" id="inspectorAppCard">
-                                <div style="color:var(--text-muted);font-size:0.88rem;text-align:center;padding:40px 20px;" id="appPlaceholder">
-                                    ✨ Select an MCP App resource (e.g. <code>ui://analytics_app</code>) to render the interactive widget.
-                                </div>
-                                <iframe id="appIframe" style="display:none;"></iframe>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Column 3: Developer Live Log Stream -->
-                <section class="pane" style="border-right: none;">
-                    <div class="pane-title">
-                        <span>📡 Smart SSE Stream Inspector</span>
-                        <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
-                    </div>
-                    <div class="pane-body" style="padding:0;">
-                        <div class="log-terminal" id="terminalLog">
-                            <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
-                        </div>
-                    </div>
-                </section>
+        <!-- Developer Protocol Inspector View -->
+        <div id="inspectorView" class="inspector-grid" style="display: none;">
+            <div class="surface-card">
+                <div class="card-header"><div class="card-title">📡 Discovered Tools</div></div>
+                <div style="padding: 16px;"><pre class="code-block" id="toolsDisplay">No connection initialized.</pre></div>
+            </div>
+            <div class="surface-card">
+                <div class="card-header"><div class="card-title">📄 Discovered Resources</div></div>
+                <div style="padding: 16px;"><pre class="code-block" id="resourcesDisplay">No connection initialized.</pre></div>
+            </div>
+            <div class="surface-card">
+                <div class="card-header"><div class="card-title">💡 Discovered Prompts</div></div>
+                <div style="padding: 16px;"><pre class="code-block" id="promptsDisplay">No connection initialized.</pre></div>
+            </div>
+            <div class="surface-card">
+                <div class="card-header"><div class="card-title">🔑 Client Capabilities</div></div>
+                <div style="padding: 16px;"><pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre></div>
             </div>
         </div>
+
     </main>
 
+    <!-- JavaScript Application Logic -->
     <script>
         let eventSource = null;
-        let messageEndpoint = null;
-        let rpcIdCounter = 1;
+        let postUrl = '';
+        let messageId = 1;
+        let isConnected = false;
+        const pendingRequests = new Map();
 
         let discoveredTools = [];
         let discoveredResources = [];
-        let pendingRpcResolvers = {};
-
-        function showNotificationToast(msg) {
-            let toastContainer = document.getElementById('toastContainer');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toastContainer';
-                toastContainer.style.cssText = 'position:fixed; top:70px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px;';
-                document.body.appendChild(toastContainer);
-            }
-
-            const toast = document.createElement('div');
-            toast.style.cssText = 'background:#065f46; color:#a7f3d0; border:1px solid #047857; border-radius:8px; padding:10px 16px; font-size:0.85rem; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,0.4); opacity:0; transition:all 0.3s ease; transform:translateY(-10px);';
-            toast.innerText = msg;
-            toastContainer.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            }, 10);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-10px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3500);
-        }
-
-        function switchView(viewName) {
-            document.getElementById('tabChat').className = viewName === 'chat' ? 'tab-item active' : 'tab-item';
-            document.getElementById('tabInspector').className = viewName === 'inspector' ? 'tab-item active' : 'tab-item';
-            document.getElementById('viewChat').className = viewName === 'chat' ? 'view-content active' : 'view-content';
-            document.getElementById('viewInspector').className = viewName === 'inspector' ? 'view-content active' : 'view-content';
-        }
-
-        function appendLog(type, title, payload) {
-            const terms = [document.getElementById('terminalLog'), document.getElementById('terminalLogChat')];
-            const timestamp = new Date().toLocaleTimeString();
-            let jsonStr = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
-
-            terms.forEach(term => {
-                if (term) {
-                    const entry = document.createElement('div');
-                    entry.className = type;
-                    entry.innerHTML = `<div><strong>[${timestamp}] ${title}:</strong></div><pre style="white-space:pre-wrap;margin-top:4px;">${jsonStr}</pre>`;
-                    term.appendChild(entry);
-                    term.scrollTop = term.scrollHeight;
-                }
-            });
-        }
-
-        function clearLogs() {
-            const term1 = document.getElementById('terminalLog');
-            const term2 = document.getElementById('terminalLogChat');
-            if (term1) term1.innerHTML = '';
-            if (term2) term2.innerHTML = '';
-        }
-
-        async function toggleConnect() {
-            if (eventSource) {
-                disconnect();
-            } else {
-                connect();
-            }
-        }
-
-        function connect() {
-            const serverUrl = document.getElementById('serverSelect').value;
-            const sseUrl = `${serverUrl}/sse`;
-            
-            appendLog('log-info', 'INITIATING SSE TRANSPORT', `Connecting to ${sseUrl}...`);
-            
-            eventSource = new EventSource(sseUrl);
-
-            eventSource.onopen = () => {
-                const pill = document.getElementById('statusPill');
-                pill.className = 'status-pill connected';
-                document.getElementById('statusText').innerText = 'Connected';
-                document.getElementById('btnConnect').innerText = 'Disconnect';
-                document.getElementById('btnConnect').className = 'btn-action btn-disconnect';
-            };
-
-            eventSource.onerror = (err) => {
-                appendLog('log-err', 'SSE TRANSPORT ERROR', err);
-                disconnect();
-            };
-
-            eventSource.addEventListener('endpoint', (e) => {
-                const endpointUri = e.data;
-                messageEndpoint = endpointUri.startsWith('http') ? endpointUri : (endpointUri.startsWith('/api') ? endpointUri : `${serverUrl}${endpointUri}`);
-                appendLog('log-stream', '📡 SSE ENDPOINT RECEIVED', `Message Endpoint: ${messageEndpoint}`);
-                
-                performProtocolHandshake();
-            });
-
-            eventSource.addEventListener('message', (e) => {
-                try {
-                    const data = JSON.parse(e.data);
-                    
-                    if (data.id) {
-                        if (pendingRpcResolvers[data.id]) {
-                            pendingRpcResolvers[data.id](data);
-                            delete pendingRpcResolvers[data.id];
-                        }
-                        
-                        if (data.error) {
-                            appendLog('log-err', `❌ JSON-RPC ERROR RESPONSE (ID #${data.id})`, data.error);
-                        } else {
-                            appendLog('log-res', `📥 JSON-RPC ASYNC RESPONSE RECEIVED (ID #${data.id})`, data.result);
-                        }
-                        return;
-                    }
-
-                    if (data.method) {
-                        const method = data.method;
-                        
-                        if (method === 'notifications/tools/list_changed') {
-                            appendLog('log-stream', '✨ DYNAMIC SCHEMA MUTATION (notifications/tools/list_changed)', 'Server declared tool registry update. Re-querying tools/list...');
-                            showNotificationToast('✨ Server tool registry updated dynamically!');
-                            fetchToolsList();
-                            appendChatMessage('assistant', '🔔 Server Notification: Dynamic tool schema mutated! Updated tool registry automatically.');
-                        } else if (method === 'notifications/resources/updated') {
-                            appendLog('log-stream', `🔄 RESOURCE MUTATION UPDATE (${method})`, data.params);
-                            showNotificationToast('🔄 Subscribed resource updated!');
-                            if (data.params && data.params.uri) {
-                                appendChatMessage('assistant', `🔔 Server Notification: Subscribed resource "${data.params.uri}" was updated!`, null, data.params);
-                            }
-                        } else if (method === 'notifications/progress') {
-                            const prog = data.params ? `${data.params.progress} / ${data.params.total || '100'}` : '';
-                            appendLog('log-stream', `⏳ TASK PROGRESS NOTIFICATION (${prog})`, data.params);
-                        } else {
-                            appendLog('log-stream', `🔔 SERVER ASYNC NOTIFICATION (${method})`, data.params || data);
-                        }
-                        return;
-                    }
-
-                    appendLog('log-stream', '📡 ASYNC SSE PAYLOAD', data);
-                } catch (err) {
-                    appendLog('log-stream', '📡 ASYNC SSE TEXT STREAM', e.data);
-                }
-            });
-        }
-
-        function disconnect() {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-            messageEndpoint = null;
-            const pill = document.getElementById('statusPill');
-            pill.className = 'status-pill';
-            document.getElementById('statusText').innerText = 'Disconnected';
-            document.getElementById('btnConnect').innerText = 'Connect Host RPC';
-            document.getElementById('btnConnect').className = 'btn-action';
-            document.getElementById('txtCapabilities').value = '';
-            document.getElementById('selectTools').innerHTML = '';
-            document.getElementById('selectResources').innerHTML = '';
-            document.getElementById('lblToolCount').innerText = '0';
-            document.getElementById('lblResourceCount').innerText = '0';
-        }
-
-        function buildMetaParams() {
-            return {
-                _meta: {
-                    client_id: document.getElementById('metaClientId').value,
-                    user_id: document.getElementById('metaUserId').value,
-                    tenant_id: document.getElementById('metaTenantId').value,
-                    trace_id: document.getElementById('metaTraceId').value
-                }
-            };
-        }
-
-        async function sendRpcRequest(method, params = {}) {
-            if (!messageEndpoint) {
-                alert('Please click "Connect Host RPC" at top right to establish a live MCP server session first!');
-                return null;
-            }
-
-            const currentId = rpcIdCounter++;
-            const metaObj = buildMetaParams();
-            const mergedParams = { ...params, ...metaObj };
-
-            const payload = {
-                jsonrpc: '2.0',
-                id: currentId,
-                method: method,
-                params: mergedParams
-            };
-
-            appendLog('log-req', `📤 RAW JSON-RPC 2.0 REQUEST PAYLOAD (${method} - ID #${currentId})`, payload);
-
-            const promise = new Promise((resolve) => {
-                pendingRpcResolvers[currentId] = resolve;
-                setTimeout(() => {
-                    if (pendingRpcResolvers[currentId]) {
-                        delete pendingRpcResolvers[currentId];
-                        resolve(null);
-                    }
-                }, 10000);
-            });
-
-            try {
-                const response = await fetch(messageEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const resText = await response.text();
-                if (resText) {
-                    try {
-                        const resJson = JSON.parse(resText);
-                        appendLog('log-res', `📥 DIRECT JSON-RPC RESPONSE (ID #${currentId})`, resJson);
-                        return resJson;
-                    } catch (e) {
-                        appendLog('log-info', `📥 HTTP POST TRANSMISSION ACKNOWLEDGED (202 Accepted - ID #${currentId})`, 'Awaiting async response over SSE stream...');
-                    }
-                }
-            } catch (err) {
-                appendLog('log-err', 'RPC TRANSPORT FAILURE', err.toString());
-            }
-
-            const sseData = await promise;
-            return sseData;
-        }
-
-        async function performProtocolHandshake() {
-            const initRes = await sendRpcRequest('initialize', {
-                protocolVersion: '2024-11-05',
-                capabilities: {},
-                clientInfo: { name: 'MCPBoothDemoHost', version: '1.0.0' }
-            });
-
-            if (initRes && initRes.result) {
-                document.getElementById('txtCapabilities').value = JSON.stringify(initRes.result.capabilities, null, 2);
-                
-                const initNotifyPayload = { jsonrpc: '2.0', method: 'notifications/initialized' };
-                appendLog('log-stream', '📡 JSON-RPC INITIALIZED SIGNAL', initNotifyPayload);
-                await fetch(messageEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(initNotifyPayload)
-                });
-
-                await refreshRegistry();
-            }
-        }
-
-        async function refreshRegistry() {
-            await fetchToolsList();
-            await fetchResourcesList();
-        }
-
-        async function fetchToolsList() {
-            const res = await sendRpcRequest('tools/list', {});
-            if (res && res.result && res.result.tools) {
-                discoveredTools = res.result.tools;
-                document.getElementById('lblToolCount').innerText = discoveredTools.length;
-                const select = document.getElementById('selectTools');
-                select.innerHTML = '';
-                discoveredTools.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t.name;
-                    opt.innerText = `🔧 ${t.name}`;
-                    select.appendChild(opt);
-                });
-                if (discoveredTools.length > 0) {
-                    select.selectedIndex = 0;
-                    onToolSelected();
-                }
-            }
-        }
-
-        async function fetchResourcesList() {
-            const res = await sendRpcRequest('resources/list', {});
-            if (res && res.result && res.result.resources) {
-                discoveredResources = res.result.resources;
-                document.getElementById('lblResourceCount').innerText = discoveredResources.length;
-                const select = document.getElementById('selectResources');
-                select.innerHTML = '';
-                discoveredResources.forEach(r => {
-                    const opt = document.createElement('option');
-                    opt.value = r.uri;
-                    opt.innerText = `📄 ${r.name || r.uri}`;
-                    select.appendChild(opt);
-                });
-            }
-        }
+        let discoveredPrompts = [];
 
         const DEMO_TOOL_PRESETS = {
-            // Demo 5: Remote MCP Server powered by ADK Toolsets
             maps_geocode_toolset: { address: "1600 Amphitheatre Pkwy, Mountain View, CA" },
             maps_directions_toolset: { origin: "Mountain View, CA", destination: "San Francisco, CA", mode: "driving" },
             bigquery_query_toolset: { sql_query: "SELECT count(*) FROM `bigquery-public-data.usa_names.usa_1910_2013` LIMIT 10" },
             bigquery_list_datasets_toolset: { project_id: "bigquery-public-data" },
-
             generate_ui_chart: { slice1_pct: 20, slice2_pct: 50, title: "Data Distribution Chart (20%, 50%, 30%)" },
             add_numbers: { a: 15, b: 27 },
             launch_analytics_app: { initial_view: "chart", slice1: 20, slice2: 50 },
@@ -593,189 +568,202 @@
             get_task_status: { task_id: "task_exp_99" },
             get_system_diagnostics: { count: 5, include_logs: true },
             calculate_tax: { amount: 1500, tax_rate: 0.15 },
-            convert_units: { value: 100, from_unit: "miles", to_unit: "km" },
-            create_note: { title: "Q3 Architecture Review", content: "MCP Apps standard graduated to formal ui:// text/html;profile=mcp-app protocol." },
-            toggle_admin_mode: { enable: true },
-            bulk_import_sample_notes: { count: 3 },
-            admin_system_diagnostics: { depth: "full", include_audit_trail: true }
+            convert_units: { value: 100, from_unit: "miles", to_unit: "km" }
         };
 
-        function getSmartDemoValue(key) {
-            const k = key.toLowerCase();
-            if (k.includes('view')) return "revenue";
-            if (k.includes('enable') || k.includes('active')) return true;
-            if (k.includes('count') || k.includes('limit') || k.includes('depth')) return 5;
-            if (k.includes('amount') || k.includes('price') || k.includes('value')) return 750.00;
-            if (k.includes('from_account') || k === 'from') return "ACC-1001-USD";
-            if (k.includes('to_account') || k === 'to') return "ACC-2002-EUR";
-            if (k.includes('title')) return "Q3 Architecture Review";
-            if (k.includes('content') || k.includes('text')) return "FastMCP SSE Transport connected over Port 8000.";
-            if (k.includes('export') || k.includes('format')) return "csv";
-            if (k.includes('currency')) return "USD";
-            if (k.includes('task_id') || k.includes('id')) return "task_exp_99";
-            return "demo_value";
+        function switchView(viewName) {
+            document.getElementById('tabChat').classList.toggle('active', viewName === 'chat');
+            document.getElementById('tabInspector').classList.toggle('active', viewName === 'inspector');
+            document.getElementById('chatView').style.display = (viewName === 'chat') ? 'grid' : 'none';
+            document.getElementById('inspectorView').style.display = (viewName === 'inspector') ? 'grid' : 'none';
         }
 
-        function onToolSelected() {
-            const name = document.getElementById('selectTools').value;
-            const tool = discoveredTools.find(t => t.name === name);
-
-            if (DEMO_TOOL_PRESETS[name]) {
-                document.getElementById('txtArguments').value = JSON.stringify(DEMO_TOOL_PRESETS[name], null, 2);
-                return;
-            }
-
-            if (tool && tool.inputSchema && tool.inputSchema.properties) {
-                const sampleArgs = {};
-                for (const k in tool.inputSchema.properties) {
-                    sampleArgs[k] = getSmartDemoValue(k);
-                }
-                document.getElementById('txtArguments').value = JSON.stringify(sampleArgs, null, 2);
-            } else {
-                document.getElementById('txtArguments').value = '{}';
-            }
+        function appendLog(type, header, detail = '') {
+            const box = document.getElementById('sseLogBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<div>[${time}] <strong>${header}</strong></div>` + (detail ? `<div>${detail}</div>` : '');
+            box.appendChild(entry);
+            box.scrollTop = box.scrollHeight;
         }
 
-        function onResourceSelected() {
-            const uri = document.getElementById('selectResources').value;
-            if (uri.startsWith('ui://')) {
-                renderMcpAppIframe(uri);
-            }
-        }
-
-        async function executeSelectedTool() {
-            const toolName = document.getElementById('selectTools').value;
-            if (!toolName) { alert('No tool selected!'); return; }
-
-            let args = {};
-            try {
-                args = JSON.parse(document.getElementById('txtArguments').value);
-            } catch (e) {
-                alert('Invalid JSON in Arguments textarea!'); return;
-            }
-
-            const res = await sendRpcRequest('tools/call', { name: toolName, arguments: args });
-            if (res && res.result && res.result.content) {
-                res.result.content.forEach(c => {
-                    if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') {
-                        renderMcpAppIframeContent(c.resource.text);
-                    }
-                });
-            }
-        }
-
-        async function readSelectedResource() {
-            const uri = document.getElementById('selectResources').value;
-            if (!uri) { alert('No resource selected!'); return; }
-
-            const res = await sendRpcRequest('resources/read', { uri: uri });
-            if (res && res.result && res.result.contents) {
-                res.result.contents.forEach(c => {
-                    if (c.mimeType === 'text/html;profile=mcp-app') {
-                        renderMcpAppIframeContent(c.text);
-                    }
-                });
-            }
-        }
-
-        function renderMcpAppIframeContent(htmlContent) {
-            const iframe = document.getElementById('appIframe');
-            const placeholder = document.getElementById('appPlaceholder');
-            if (placeholder) placeholder.style.display = 'none';
-            if (iframe) {
-                iframe.style.display = 'block';
-                iframe.srcdoc = htmlContent;
-            }
-            appendLog('log-info', '🖥️ RENDERING FORMAL MCP APP WIDGET', 'Embedded HTML/JS component rendered into iframe container (text/html;profile=mcp-app)');
-        }
-
-        async function renderMcpAppIframe(uri) {
-            await readSelectedResource();
-        }
-
-        // =========================================================================
-        // AI ASSISTANT CHAT ENGINE (LIVE GEMINI 2.5 FLASH + PATTERN FALLBACK)
-        // =========================================================================
         function appendChatMessage(sender, text, toolCall = null, toolResult = null, mcpAppHtml = null) {
-            const chatThread = document.getElementById('chatThread');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = sender === 'user' ? 'bubble bubble-user' : 'bubble bubble-assistant';
+            const container = document.getElementById('chatMessages');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}`;
 
-            const header = document.createElement('div');
-            header.className = 'bubble-header';
-            header.innerText = sender === 'user' ? '👤 User Presenter' : '🤖 MCP AI Assistant (Gemini 3.6 Flash)';
-            msgDiv.appendChild(header);
-
-            const body = document.createElement('div');
-            body.innerText = text;
-            msgDiv.appendChild(body);
+            let html = `<strong>${sender === 'assistant' ? '🤖 MCP AI Assistant (Gemini 3.6 Flash)' : '👤 User Presenter'}</strong><br>${text}`;
 
             if (toolCall) {
-                const card = document.createElement('div');
-                card.className = 'execution-badge';
-                card.innerHTML = `<span>⚡ Executing Tool RPC: <strong>${toolCall.name}</strong></span><span style="color:var(--text-muted);font-size:0.75rem;">${JSON.stringify(toolCall.args)}</span>`;
-                msgDiv.appendChild(card);
+                html += `<div class="tool-call-box"><div class="tool-call-header">Executing Tool: ${toolCall.name}</div><pre>${JSON.stringify(toolCall.args, null, 2)}</pre></div>`;
             }
 
             if (toolResult) {
-                const resCard = document.createElement('div');
-                resCard.className = 'result-box';
-                resCard.innerText = `📥 Result: ${typeof toolResult === 'object' ? JSON.stringify(toolResult, null, 2) : toolResult}`;
-                msgDiv.appendChild(resCard);
+                html += `<div class="tool-call-box"><div class="tool-call-header">📥 Result:</div><pre>${JSON.stringify(toolResult, null, 2)}</pre></div>`;
             }
 
             if (mcpAppHtml) {
-                const appCard = document.createElement('div');
-                appCard.className = 'mcp-app-card';
-                
+                html += `<div class="tool-call-header" style="margin-top:10px;">🚀 Formal MCP App Widget Rendered:</div>`;
                 const iframe = document.createElement('iframe');
+                iframe.className = 'mcp-app-frame';
                 iframe.srcdoc = mcpAppHtml;
-                appCard.appendChild(iframe);
-                msgDiv.appendChild(appCard);
+                bubble.innerHTML = html;
+                bubble.appendChild(iframe);
+                container.appendChild(bubble);
+                container.scrollTop = container.scrollHeight;
+                return;
             }
 
-            chatThread.appendChild(msgDiv);
-            chatThread.scrollTop = chatThread.scrollHeight;
-        }
-
-        function sendQuickPrompt(promptText) {
-            document.getElementById('chatInput').value = promptText;
-            handleChatSubmit();
+            bubble.innerHTML = html;
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
         }
 
         function clearChatThread() {
-            const chatThread = document.getElementById('chatThread');
-            if (chatThread) {
-                chatThread.innerHTML = `
-                    <div class="bubble bubble-assistant">
-                        <div class="bubble-header">🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash Connected)</div>
-                        Chat conversation cleared. How can I assist you today?
-                        <div style="margin-top:6px; font-size:0.83rem; color:var(--text-muted);">
-                            💡 <strong>Tip:</strong> You can ask me to run tools, perform financial transfers, or generate dynamic interactive UI chart widgets!
-                        </div>
-                    </div>
-                `;
-            }
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = `
+                <div class="chat-bubble assistant">
+                    <strong>🤖 MCP Intelligent AI Assistant (Gemini 3.6 Flash)</strong><br>
+                    Welcome! Chat history cleared. How can I assist you today?
+                </div>
+            `;
+            appendLog('log-info', 'CHAT THREAD CLEARED');
+        }
+
+        function toggleConnect() {
+            if (isConnected) disconnectSse();
+            else connectSse();
+        }
+
+        function connectSse() {
+            const endpoint = document.getElementById('serverSelect').value + '/sse';
+            appendLog('log-info', 'CONNECTING SSE', endpoint);
+            
+            eventSource = new EventSource(endpoint);
+
+            eventSource.onopen = () => {
+                isConnected = true;
+                document.getElementById('statusDot').className = 'status-dot online';
+                document.getElementById('statusText').innerText = 'Connected';
+                document.getElementById('btnConnect').innerText = 'Disconnect';
+                appendLog('log-success', 'SSE CONNECTION ESTABLISHED');
+            };
+
+            eventSource.addEventListener('endpoint', (e) => {
+                postUrl = e.data;
+                appendLog('log-info', 'POST ENDPOINT RECEIVED', postUrl);
+                sendInitialize();
+            });
+
+            eventSource.addEventListener('message', (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    appendLog('log-success', 'ASYNC RESPONSE RECEIVED', JSON.stringify(msg, null, 2));
+
+                    if (msg.id && pendingRequests.has(msg.id)) {
+                        const resolver = pendingRequests.get(msg.id);
+                        pendingRequests.delete(msg.id);
+                        resolver(msg);
+                    }
+
+                    if (msg.result) {
+                        if (msg.result.tools) discoveredTools = msg.result.tools;
+                        if (msg.result.resources) discoveredResources = msg.result.resources;
+                        if (msg.result.prompts) discoveredPrompts = msg.result.prompts;
+                        updateInspectorView();
+                    }
+                } catch (err) {
+                    appendLog('log-err', 'PARSE ERROR', e.data);
+                }
+            });
+
+            eventSource.onerror = () => {
+                disconnectSse();
+            };
+        }
+
+        function disconnectSse() {
+            if (eventSource) eventSource.close();
+            eventSource = null;
+            isConnected = false;
+            document.getElementById('statusDot').className = 'status-dot';
+            document.getElementById('statusText').innerText = 'Disconnected';
+            document.getElementById('btnConnect').innerText = 'Connect Host RPC';
+            appendLog('log-err', 'SSE DISCONNECTED');
+        }
+
+        function sendRpcRequest(method, params = {}) {
+            return new Promise((resolve, reject) => {
+                if (!postUrl) return reject('No post URL');
+                const id = messageId++;
+                const payload = { jsonrpc: '2.0', id, method, params };
+
+                pendingRequests.set(id, resolve);
+                appendLog('log-info', `REQUEST [${method}]`, JSON.stringify(payload, null, 2));
+
+                fetch(postUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(reject);
+            });
+        }
+
+        async function sendInitialize() {
+            const initRes = await sendRpcRequest('initialize', {
+                protocolVersion: '2024-11-05',
+                capabilities: { roots: { listChanged: true } },
+                clientInfo: { name: 'client_booth_demo_host', version: '1.0.0' }
+            });
+            
+            await fetch(postUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })
+            });
+
+            await sendRpcRequest('tools/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+            await sendRpcRequest('resources/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+            await sendRpcRequest('prompts/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+        }
+
+        function updateInspectorView() {
+            document.getElementById('toolsDisplay').innerText = JSON.stringify(discoveredTools, null, 2);
+            document.getElementById('resourcesDisplay').innerText = JSON.stringify(discoveredResources, null, 2);
+            document.getElementById('promptsDisplay').innerText = JSON.stringify(discoveredPrompts, null, 2);
+            document.getElementById('capabilitiesDisplay').innerText = JSON.stringify({ protocolVersion: '2024-11-05', client: 'booth_demo_host' }, null, 2);
+        }
+
+        function sendQuickPrompt(text) {
+            document.getElementById('chatInput').value = text;
+            handleChatSubmit();
         }
 
         async function handleChatSubmit() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
+            const textarea = document.getElementById('chatInput');
+            const text = textarea.value.trim();
             if (!text) return;
-            input.value = '';
+            textarea.value = '';
 
             appendChatMessage('user', text);
 
-            if (!eventSource) {
-                appendChatMessage('assistant', '⚠️ Please click "Connect Host RPC" at top right to establish a live connection to an MCP server first.');
-                return;
+            if (!isConnected) {
+                await connectSse();
+                await new Promise(r => setTimeout(r, 800));
             }
 
             const apiKey = document.getElementById('geminiApiKey').value.trim();
             const selectedModel = document.getElementById('geminiModel').value;
 
-            // Send prompt to Host LLM router (uses Host GEMINI_API_KEY environment variable or optional UI key)
             appendChatMessage('assistant', `🧠 Asking ${selectedModel} model to reason and orchestrate MCP tools...`);
+
             try {
                 const res = await fetch('/api/chat/generate', {
                     method: 'POST',
@@ -783,157 +771,37 @@
                     body: JSON.stringify({ prompt: text, tools: discoveredTools, api_key: apiKey, model: selectedModel })
                 });
                 const data = await res.json();
-                
-                if (data.error) {
-                    if (data.error.includes("No GEMINI_API_KEY found")) {
-                        appendChatMessage('assistant', 'ℹ Host GEMINI_API_KEY environment variable is not set. Export GEMINI_API_KEY on the host server or enter an API key in the top header bar.');
-                    } else {
-                        appendChatMessage('assistant', `⚠️ Gemini Error: ${data.error}`);
-                        return;
-                    }
-                } else {
-                    if (data.tool_call) {
-                        const toolName = data.tool_call.name;
-                        const toolArgs = data.tool_call.arguments || {};
-                        appendChatMessage('assistant', data.reasoning || `Gemini decided to execute tool: ${toolName}`, { name: toolName, args: toolArgs });
 
-                        const rpcRes = await sendRpcRequest('tools/call', { name: toolName, arguments: toolArgs });
-                        let mcpAppHtml = null;
-                        if (rpcRes && rpcRes.result && rpcRes.result.content) {
-                            rpcRes.result.content.forEach(c => {
-                                if (c.type === 'resource' && c.resource) {
-                                    if (c.resource.text) {
-                                        mcpAppHtml = c.resource.text;
-                                    } else if (c.resource.contents && c.resource.contents[0]) {
-                                        mcpAppHtml = c.resource.contents[0].text;
-                                    }
+                if (data.tool_call) {
+                    const toolName = data.tool_call.name;
+                    const toolArgs = data.tool_call.arguments || {};
+                    appendChatMessage('assistant', data.reasoning || `Gemini decided to execute tool: ${toolName}`, { name: toolName, args: toolArgs });
+
+                    const rpcRes = await sendRpcRequest('tools/call', { name: toolName, arguments: toolArgs });
+                    let mcpAppHtml = null;
+                    if (rpcRes && rpcRes.result && rpcRes.result.content) {
+                        rpcRes.result.content.forEach(c => {
+                            if (c.type === 'resource' && c.resource) {
+                                if (c.resource.text) {
+                                    mcpAppHtml = c.resource.text;
+                                } else if (c.resource.contents && c.resource.contents[0]) {
+                                    mcpAppHtml = c.resource.contents[0].text;
                                 }
-                            });
-                        }
-                        appendChatMessage('assistant', data.response || 'Tool execution complete:', null, rpcRes ? rpcRes.result : null, mcpAppHtml);
-                    } else {
-                        appendChatMessage('assistant', data.response || 'No tool call needed.');
-                    }
-                    return;
-                }
-            } catch (err) {
-                appendLog('log-err', 'LLM GENERATION ERROR', err.toString());
-            }
-
-            // Fallback Pattern Matching if no API Key is entered
-            const lower = text.toLowerCase();
-
-            if (lower.includes('capabilities') || lower.includes('tools') || lower.includes('resources') || lower.includes('registry')) {
-                const toolsSummary = discoveredTools.map(t => `• ${t.name}: ${t.description || ''}`).join('\n');
-                const resSummary = discoveredResources.map(r => `• ${r.uri}`).join('\n');
-                appendChatMessage('assistant', `Discovered Registry for server:\n\n🔧 Tools:\n${toolsSummary || 'None'}\n\n📄 Resources:\n${resSummary || 'None'}\n\n💡 Tip: Enter a Gemini API Key in the top header bar to enable live Gemini 2.5 Flash LLM reasoning!`);
-                return;
-            }
-
-            if (lower.includes('diagnostic') || lower.includes('report') || lower.includes('count')) {
-                const toolCall = { name: 'get_system_diagnostics', args: { count: 5 } };
-                appendChatMessage('assistant', 'Running system diagnostics tool RPC call...', toolCall);
-                const res = await sendRpcRequest('tools/call', toolCall);
-                if (res && res.result) {
-                    appendChatMessage('assistant', 'Diagnostic check completed successfully!', null, res.result);
-                }
-                return;
-            }
-
-            if (lower.includes('transfer') || lower.includes('fund') || lower.includes('approval')) {
-                const toolCall = { name: 'transfer_funds_with_approval', args: { from_account: 'ACC123', to_account: 'ACC456', amount: 500 } };
-                appendChatMessage('assistant', 'Initiating transfer with human elicitation approval...', toolCall);
-                const res = await sendRpcRequest('tools/call', toolCall);
-                if (res && res.result) {
-                    appendChatMessage('assistant', 'Transfer completed with elicitation check!', null, res.result);
-                }
-                return;
-            }
-
-            const pctMatches = text.match(/\d+%/g);
-            if (pctMatches || lower.includes('chart') || lower.includes('generate ui') || lower.includes('remaining') || lower.includes('reamining')) {
-                const segments = {};
-                if (pctMatches && pctMatches.length > 0) {
-                    let currentSum = 0;
-                    pctMatches.forEach((m, idx) => {
-                        const val = parseFloat(m.replace('%', ''));
-                        segments[`Segment ${idx + 1}`] = val;
-                        currentSum += val;
-                    });
-                    if ((lower.includes('remaining') || lower.includes('reamining') || currentSum < 100) && currentSum < 100) {
-                        segments['Remaining'] = Math.max(0, 100 - currentSum);
-                    }
-                } else {
-                    segments["Segment 1"] = 20;
-                    segments["Segment 2"] = 50;
-                    segments["Remaining"] = 30;
-                }
-
-                const toolCall = { name: 'generate_ui_chart', args: { segments_json: JSON.stringify(segments), title: "Dynamic Data Distribution Chart" } };
-                appendChatMessage('assistant', `Generating interactive dynamic SVG chart widget with segments: ${JSON.stringify(segments)}...`, toolCall);
-                const toolRes = await sendRpcRequest('tools/call', { name: 'generate_ui_chart', arguments: { segments_json: JSON.stringify(segments), title: "Dynamic Data Distribution Chart" } });
-                let appHtml = null;
-                if (toolRes && toolRes.result && toolRes.result.content) {
-                    toolRes.result.content.forEach(c => {
-                        if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') appHtml = c.resource.text;
-                    });
-                }
-                if (appHtml) {
-                    appendChatMessage('assistant', 'Rendered interactive MCP App UI Chart Component:', null, toolRes ? toolRes.result : null, appHtml);
-                } else {
-                    appendChatMessage('assistant', 'Could not locate an MCP App resource on this server. Switch to Demo 4 (Modern Spec Extensions & Formal MCP Apps) in the server selector at top right!');
-                }
-                return;
-            }
-
-            if (lower.includes('analytics') || lower.includes('app') || lower.includes('widget') || lower.includes('launch')) {
-                appendChatMessage('assistant', 'Fetching formal MCP App widget resource (ui://analytics_app)...');
-                const res = await sendRpcRequest('resources/read', { uri: 'ui://analytics_app' });
-                let appHtml = null;
-                if (res && res.result && res.result.contents) {
-                    res.result.contents.forEach(c => {
-                        if (c.mimeType === 'text/html;profile=mcp-app') appHtml = c.text;
-                    });
-                }
-                if (appHtml) {
-                    appendChatMessage('assistant', 'Here is the interactive MCP Analytics App rendered inline:', null, null, appHtml);
-                } else {
-                    appendChatMessage('assistant', 'Attempting tool launch for analytics app...');
-                    const toolRes = await sendRpcRequest('tools/call', { name: 'launch_analytics_app', arguments: {} });
-                    if (toolRes && toolRes.result && toolRes.result.content) {
-                        toolRes.result.content.forEach(c => {
-                            if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') appHtml = c.resource.text;
+                            }
                         });
                     }
-                    if (appHtml) {
-                        appendChatMessage('assistant', 'Rendered interactive MCP App widget:', null, null, appHtml);
-                    } else {
-                        appendChatMessage('assistant', 'Could not locate an MCP App resource on this server. Switch to Demo 4 (Modern Spec Extensions & Formal MCP Apps) in the server selector at top right!');
-                    }
+                    appendChatMessage('assistant', data.response || 'Tool execution complete:', null, rpcRes ? rpcRes.result : null, mcpAppHtml);
+                } else {
+                    appendChatMessage('assistant', data.response || 'No tool call needed.');
                 }
-                return;
+            } catch (err) {
+                appendLog('log-err', 'CHAT GENERATION ERROR', err.toString());
             }
-
-            if (lower.includes('export') || lower.includes('background') || lower.includes('task')) {
-                const toolCall = { name: 'start_background_export_task', args: { export_type: 'csv' } };
-                appendChatMessage('assistant', 'Starting background export task...', toolCall);
-                const res = await sendRpcRequest('tools/call', toolCall);
-                if (res && res.result) {
-                    appendChatMessage('assistant', 'Background task started! Checking status...', null, res.result);
-                    const statusRes = await sendRpcRequest('tools/call', { name: 'get_task_status', arguments: { task_id: 'task_exp_99' } });
-                    if (statusRes && statusRes.result) {
-                        appendChatMessage('assistant', 'Task status retrieved:', null, statusRes.result);
-                    }
-                }
-                return;
-            }
-
-            appendChatMessage('assistant', `Hello! How can I assist you? You can ask me to run tools, perform financial transfers, or launch interactive MCP Apps.\n\n💡 Tip: Enter a Gemini API Key in the top header bar to enable live Gemini 3.6 Flash reasoning!`);
         }
 
-        window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'mcp-app-event') {
-                appendLog('log-stream', '📩 MCP APP postMessage EVENT RECEIVED FROM IFRAME', e.data);
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'mcp-app-event') {
+                appendLog('log-success', 'POSTMESSAGE EVENT FROM MCP APP WIDGET', JSON.stringify(event.data, null, 2));
             }
         });
     </script>
