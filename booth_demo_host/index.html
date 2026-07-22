@@ -747,22 +747,24 @@
             const apiKey = document.getElementById('geminiApiKey').value.trim();
             const selectedModel = document.getElementById('geminiModel').value;
 
-            // Attempt Live Gemini 2.5 Flash Generation if API key is provided
-            if (apiKey) {
-                appendChatMessage('assistant', `🧠 Asking ${selectedModel} model to reason and orchestrate MCP tools...`);
-                try {
-                    const res = await fetch('/api/chat/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: text, tools: discoveredTools, api_key: apiKey, model: selectedModel })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.error) {
-                        appendChatMessage('assistant', `⚠️ Gemini API Error: ${data.error}`);
+            // Send prompt to Host LLM router (uses Host GEMINI_API_KEY environment variable or optional UI key)
+            appendChatMessage('assistant', `🧠 Asking ${selectedModel} model to reason and orchestrate MCP tools...`);
+            try {
+                const res = await fetch('/api/chat/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text, tools: discoveredTools, api_key: apiKey, model: selectedModel })
+                });
+                const data = await res.json();
+                
+                if (data.error) {
+                    if (data.error.includes("No GEMINI_API_KEY found")) {
+                        appendChatMessage('assistant', 'ℹ Host GEMINI_API_KEY environment variable is not set. Export GEMINI_API_KEY on the host server or enter an API key in the top header bar.');
+                    } else {
+                        appendChatMessage('assistant', `⚠️ Gemini Error: ${data.error}`);
                         return;
                     }
-
+                } else {
                     if (data.tool_call) {
                         const toolName = data.tool_call.name;
                         const toolArgs = data.tool_call.arguments || {};
@@ -782,9 +784,9 @@
                         appendChatMessage('assistant', data.response || 'No tool call needed.');
                     }
                     return;
-                } catch (err) {
-                    appendLog('log-err', 'LLM GENERATION ERROR', err.toString());
                 }
+            } catch (err) {
+                appendLog('log-err', 'LLM GENERATION ERROR', err.toString());
             }
 
             // Fallback Pattern Matching if no API Key is entered

@@ -143,12 +143,12 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
         
         prompt = body.get("prompt", "")
         tools = body.get("tools", [])
-        api_key = body.get("api_key") or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or body.get("api_key")
         model_name = "gemini-3.6-flash"
         
         if not api_key:
             self._send_json_response(400, {
-                "error": "No Gemini API Key provided. Please enter a valid API key in the top header or set GEMINI_API_KEY environment variable."
+                "error": "No GEMINI_API_KEY found on Host or UI. Please export GEMINI_API_KEY environment variable on the host server or enter an API key in the top header bar."
             })
             return
 
