@@ -200,15 +200,16 @@ def serve_unified_proxy_host():
     host_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(host_dir)
     
-    class ReusableTCPServer(socketserver.TCPServer):
+    class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         allow_reuse_address = True
+        daemon_threads = True
 
     port = 8000
     try:
-        httpd = ReusableTCPServer(("0.0.0.0", port), UnifiedProxyHostHandler)
+        httpd = ThreadedTCPServer(("0.0.0.0", port), UnifiedProxyHostHandler)
     except OSError:
         port = 8080
-        httpd = ReusableTCPServer(("0.0.0.0", port), UnifiedProxyHostHandler)
+        httpd = ThreadedTCPServer(("0.0.0.0", port), UnifiedProxyHostHandler)
 
     with httpd:
         print(f"\n{BOLD}{MAGENTA}========================================================================={RESET}")

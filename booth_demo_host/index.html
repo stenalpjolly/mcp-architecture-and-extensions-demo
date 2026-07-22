@@ -226,7 +226,7 @@
 
             eventSource.addEventListener('endpoint', (e) => {
                 const endpointUri = e.data;
-                messageEndpoint = endpointUri.startsWith('http') ? endpointUri : `${serverUrl}${endpointUri}`;
+                messageEndpoint = endpointUri.startsWith('http') ? endpointUri : (endpointUri.startsWith('/api') ? endpointUri : `${serverUrl}${endpointUri}`);
                 appendLog('log-stream', '📡 SSE ENDPOINT RECEIVED', `Message Endpoint: ${messageEndpoint}`);
                 
                 // Perform Protocol Handshake Sequence
@@ -454,19 +454,6 @@
         window.addEventListener('message', (e) => {
             if (e.data && e.data.type === 'mcp-app-event') {
                 appendLog('log-stream', '📩 MCP APP postMessage EVENT RECEIVED FROM IFRAME', e.data);
-            }
-        });
-
-        // Dynamic hostname auto-detection for network & local access
-        window.addEventListener('DOMContentLoaded', () => {
-            const host = window.location.hostname || '127.0.0.1';
-            const protocol = window.location.protocol || 'http:';
-            const select = document.getElementById('serverSelect');
-            if (select && select.options.length >= 4) {
-                select.options[0].value = `${protocol}//${host}:8001`;
-                select.options[1].value = `${protocol}//${host}:8002`;
-                select.options[2].value = `${protocol}//${host}:8003`;
-                select.options[3].value = `${protocol}//${host}:8004`;
             }
         });
     </script>
