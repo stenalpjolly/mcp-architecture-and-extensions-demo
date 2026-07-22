@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Demo Host - AI Assistant & Protocol Workspace</title>
+    <title>MCP Demo Host - AI Assistant & Live Protocol Stream</title>
     <style>
         :root {
             --bg-main: #090d16;
@@ -53,33 +53,34 @@
         .view-content.active { display: flex; }
 
         /* ========================================================================= */
-        /* VIEW 1: AI ASSISTANT CHAT & APP WORKSPACE (PRIMARY SIMPLE VIEW) */
+        /* VIEW 1: AI ASSISTANT CHAT WITH LIVE SIDE LOG STREAM */
         /* ========================================================================= */
-        .chat-container { width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; height: 100%; padding: 20px; gap: 16px; }
-        .chat-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-right: 8px; }
+        .chat-workspace-grid { width: 100%; display: grid; grid-template-columns: 1fr 440px; height: 100%; }
+        .chat-main { display: flex; flex-direction: column; height: 100%; padding: 20px; gap: 14px; border-right: 1px solid var(--border-subtle); overflow: hidden; }
+        .chat-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 8px; }
         
-        .bubble { display: flex; flex-direction: column; gap: 8px; max-width: 88%; border-radius: 12px; padding: 14px 18px; font-size: 0.92rem; line-height: 1.5; }
+        .bubble { display: flex; flex-direction: column; gap: 8px; max-width: 90%; border-radius: 12px; padding: 14px 18px; font-size: 0.92rem; line-height: 1.5; }
         .bubble-user { align-self: flex-end; background: #1e293b; border: 1px solid var(--border-color); color: #f8fafc; }
         .bubble-assistant { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border-subtle); color: #e2e8f0; width: 100%; }
         
         .bubble-header { font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px; }
         
-        /* Execution Cards inside Chat */
+        /* Execution Badges */
         .execution-badge { background: #020617; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.84rem; color: var(--accent-yellow); display: flex; justify-content: space-between; align-items: center; }
         .result-box { background: #064e3b; border: 1px solid #047857; color: #a7f3d0; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.83rem; white-space: pre-wrap; margin-top: 6px; }
 
-        /* Embedded MCP App Container (Polished UI/UX) */
-        .mcp-app-card { width: 100%; height: 360px; border: 1px solid var(--border-color); border-radius: 12px; background: #020617; overflow: hidden; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Embedded MCP App Container */
+        .mcp-app-card { width: 100%; height: 340px; border: 1px solid var(--border-color); border-radius: 12px; background: #020617; overflow: hidden; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .mcp-app-card iframe { width: 100%; height: 100%; border: none; }
 
         /* Preset Chips */
-        .chips-bar { display: flex; gap: 10px; flex-wrap: wrap; }
-        .action-chip { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 20px; padding: 8px 16px; font-size: 0.84rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .chips-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+        .action-chip { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
         .action-chip:hover { background: var(--bg-panel); border-color: var(--accent-cyan); transform: translateY(-1px); }
 
-        /* Chat Input Box */
+        /* Input Box */
         .chat-input-wrapper { display: flex; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-        .chat-input-field { flex: 1; background: transparent; border: none; color: white; font-size: 0.95rem; outline: none; }
+        .chat-input-field { flex: 1; background: transparent; border: none; color: white; font-size: 0.93rem; outline: none; }
 
         /* ========================================================================= */
         /* VIEW 2: DEVELOPER PROTOCOL INSPECTOR */
@@ -132,40 +133,56 @@
 
     <!-- Top View Selector Tabs -->
     <nav class="view-tabs">
-        <button class="tab-item active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant & App Workspace</button>
+        <button class="tab-item active" id="tabChat" onclick="switchView('chat')">💬 AI Assistant Workspace & Live Side Log</button>
         <button class="tab-item" id="tabInspector" onclick="switchView('inspector')">🔬 Developer Protocol Inspector</button>
     </nav>
 
     <main>
         <!-- ========================================================================= -->
-        <!-- VIEW 1: AI ASSISTANT CHAT & APP WORKSPACE (DEFAULT CLEAN VIEW) -->
+        <!-- VIEW 1: AI ASSISTANT CHAT WITH LIVE SIDE LOG STREAM -->
         <!-- ========================================================================= -->
         <div class="view-content active" id="viewChat">
-            <div class="chat-container">
-                <div class="chat-thread" id="chatThread">
-                    <div class="bubble bubble-assistant">
-                        <div class="bubble-header">🤖 MCP Intelligent AI Assistant</div>
-                        Welcome! I am connected to your live MCP server over HTTP SSE RPC transport. How can I assist you today?
-                        <div style="margin-top:6px; font-size:0.83rem; color:var(--text-muted);">
-                            Ask me to run tools, fetch resources, perform financial transfers, or launch interactive MCP Apps!
+            <div class="chat-workspace-grid">
+                <!-- Left: Chat Thread & Input -->
+                <div class="chat-main">
+                    <div class="chat-thread" id="chatThread">
+                        <div class="bubble bubble-assistant">
+                            <div class="bubble-header">🤖 MCP Intelligent AI Assistant</div>
+                            Welcome! I am connected to your live MCP server over HTTP SSE RPC transport. How can I assist you today?
+                            <div style="margin-top:6px; font-size:0.83rem; color:var(--text-muted);">
+                                Ask me to run tools, fetch resources, perform financial transfers, or launch interactive MCP Apps!
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Preset Action Chips -->
+                    <div class="chips-bar">
+                        <div class="action-chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discovered Registry</div>
+                        <div class="action-chip" onclick="sendQuickPrompt('Run system diagnostic report with count 5')">⚡ System Diagnostic</div>
+                        <div class="action-chip" onclick="sendQuickPrompt('Transfer $500 from ACC123 to ACC456 with approval')">💸 Transfer Funds</div>
+                        <div class="action-chip" onclick="sendQuickPrompt('Launch the analytics dashboard app')">📊 Launch MCP Analytics App</div>
+                        <div class="action-chip" onclick="sendQuickPrompt('Start background export task and check status')">⏳ Background Export Task</div>
+                    </div>
+
+                    <!-- Chat Input Box -->
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask assistant to execute MCP tools or launch interactive apps..." onkeypress="if(event.key === 'Enter') handleChatSubmit()">
+                        <button class="btn-action" onclick="handleChatSubmit()">Send</button>
                     </div>
                 </div>
 
-                <!-- Preset Action Chips -->
-                <div class="chips-bar">
-                    <div class="action-chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discovered Registry</div>
-                    <div class="action-chip" onclick="sendQuickPrompt('Run system diagnostic report with count 5')">⚡ System Diagnostic</div>
-                    <div class="action-chip" onclick="sendQuickPrompt('Transfer $500 from ACC123 to ACC456 with approval')">💸 Transfer Funds</div>
-                    <div class="action-chip" onclick="sendQuickPrompt('Launch the analytics dashboard app')">📊 Launch MCP Analytics App</div>
-                    <div class="action-chip" onclick="sendQuickPrompt('Start background export task and check status')">⏳ Background Export Task</div>
-                </div>
-
-                <!-- Input Box -->
-                <div class="chat-input-wrapper">
-                    <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask assistant to execute MCP tools or launch interactive apps..." onkeypress="if(event.key === 'Enter') handleChatSubmit()">
-                    <button class="btn-action" onclick="handleChatSubmit()">Send</button>
-                </div>
+                <!-- Right: Live Side Log Stream Panel -->
+                <section class="pane" style="border-right:none;">
+                    <div class="pane-title">
+                        <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
+                        <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
+                    </div>
+                    <div class="pane-body" style="padding:0;">
+                        <div class="log-terminal" id="terminalLogChat">
+                            <div class="log-info">Connecting to server SSE endpoint initiates live protocol transport stream...</div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -237,10 +254,10 @@
                     </div>
                 </section>
 
-                <!-- Column 3: Live Protocol Log Stream -->
+                <!-- Column 3: Developer Live Log Stream -->
                 <section class="pane" style="border-right: none;">
                     <div class="pane-title">
-                        <span>📡 Live JSON-RPC 2.0 Stream Inspector</span>
+                        <span>📡 Developer Stream Inspector</span>
                         <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="clearLogs()">🧹 Clear</button>
                     </div>
                     <div class="pane-body" style="padding:0;">
@@ -270,19 +287,26 @@
         }
 
         function appendLog(type, title, payload) {
-            const term = document.getElementById('terminalLog');
-            const entry = document.createElement('div');
-            entry.className = type;
+            const terms = [document.getElementById('terminalLog'), document.getElementById('terminalLogChat')];
             const timestamp = new Date().toLocaleTimeString();
-            
             let jsonStr = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
-            entry.innerHTML = `<div><strong>[${timestamp}] ${title}:</strong></div><pre style="white-space:pre-wrap;margin-top:4px;">${jsonStr}</pre>`;
-            term.appendChild(entry);
-            term.scrollTop = term.scrollHeight;
+
+            terms.forEach(term => {
+                if (term) {
+                    const entry = document.createElement('div');
+                    entry.className = type;
+                    entry.innerHTML = `<div><strong>[${timestamp}] ${title}:</strong></div><pre style="white-space:pre-wrap;margin-top:4px;">${jsonStr}</pre>`;
+                    term.appendChild(entry);
+                    term.scrollTop = term.scrollHeight;
+                }
+            });
         }
 
         function clearLogs() {
-            document.getElementById('terminalLog').innerHTML = '';
+            const term1 = document.getElementById('terminalLog');
+            const term2 = document.getElementById('terminalLogChat');
+            if (term1) term1.innerHTML = '';
+            if (term2) term2.innerHTML = '';
         }
 
         async function toggleConnect() {
@@ -552,9 +576,11 @@
         function renderMcpAppIframeContent(htmlContent) {
             const iframe = document.getElementById('appIframe');
             const placeholder = document.getElementById('appPlaceholder');
-            placeholder.style.display = 'none';
-            iframe.style.display = 'block';
-            iframe.srcdoc = htmlContent;
+            if (placeholder) placeholder.style.display = 'none';
+            if (iframe) {
+                iframe.style.display = 'block';
+                iframe.srcdoc = htmlContent;
+            }
             appendLog('log-info', '🖥️ RENDERING FORMAL MCP APP WIDGET', 'Embedded HTML/JS component rendered into iframe container (text/html;profile=mcp-app)');
         }
 
