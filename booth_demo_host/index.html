@@ -794,8 +794,12 @@
                         let mcpAppHtml = null;
                         if (rpcRes && rpcRes.result && rpcRes.result.content) {
                             rpcRes.result.content.forEach(c => {
-                                if (c.type === 'resource' && c.resource && c.resource.mimeType === 'text/html;profile=mcp-app') {
-                                    mcpAppHtml = c.resource.text;
+                                if (c.type === 'resource' && c.resource) {
+                                    if (c.resource.text) {
+                                        mcpAppHtml = c.resource.text;
+                                    } else if (c.resource.contents && c.resource.contents[0]) {
+                                        mcpAppHtml = c.resource.contents[0].text;
+                                    }
                                 }
                             });
                         }

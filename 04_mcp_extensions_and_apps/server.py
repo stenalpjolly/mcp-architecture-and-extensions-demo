@@ -176,11 +176,16 @@ async def get_analytics_ui_app() -> str:
 
 
 @mcp.tool()
-async def generate_ui_chart(segments_json: str = '{"Segment 1": 20, "Segment 2": 50, "Remaining": 30}', title: str = "Dynamic Data Distribution Chart", ctx: Context = None) -> list:
+async def generate_ui_chart(segments_json: Any = '{"Segment 1": 20, "Segment 2": 50, "Remaining": 30}', title: str = "Dynamic Data Distribution Chart", ctx: Context = None) -> list:
     """Generates an interactive HTML UI component displaying a dynamic chart for any arbitrary segments and percentage values (e.g. '{"Segment A": 20, "Segment B": 50, "Remaining": 30}')."""
-    try:
-        segments_dict = json.loads(segments_json)
-    except Exception:
+    if isinstance(segments_json, dict):
+        segments_dict = segments_json
+    elif isinstance(segments_json, str):
+        try:
+            segments_dict = json.loads(segments_json)
+        except Exception:
+            segments_dict = {"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}
+    else:
         segments_dict = {"Segment 1": 20.0, "Segment 2": 50.0, "Remaining": 30.0}
         
     if ctx:
