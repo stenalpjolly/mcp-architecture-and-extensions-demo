@@ -26,6 +26,7 @@ import http.server
 import socketserver
 import urllib.request
 import urllib.error
+import json
 import site
 
 # Ensure portable site packages
@@ -143,7 +144,7 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
         prompt = body.get("prompt", "")
         tools = body.get("tools", [])
         api_key = body.get("api_key") or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-        model_name = body.get("model", "gemini-3.6-flash")
+        model_name = "gemini-3.6-flash"
         
         if not api_key:
             self._send_json_response(400, {
