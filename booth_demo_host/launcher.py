@@ -137,7 +137,7 @@ class UnifiedProxyHostHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def _handle_gemini_chat_generate(self):
-        """Connects live Gemini 2.5 Flash LLM to process user prompts and orchestrate MCP tools."""
+        """Connects live Gemini 3.6 Flash LLM to process user prompts and orchestrate MCP tools."""
         content_len = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(content_len))
         
