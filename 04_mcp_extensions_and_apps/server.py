@@ -18,8 +18,10 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-# Ensure user site-packages are accessible
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python3.13/site-packages'))
+import site
+user_site = site.getusersitepackages()
+if user_site and user_site not in sys.path:
+    sys.path.insert(0, user_site)
 
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.server.lowlevel.server import NotificationOptions, InitializationOptions

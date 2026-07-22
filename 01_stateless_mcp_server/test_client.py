@@ -14,7 +14,10 @@ import os
 import json
 import asyncio
 
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python3.13/site-packages'))
+import site
+user_site = site.getusersitepackages()
+if user_site and user_site not in sys.path:
+    sys.path.insert(0, user_site)
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import Implementation
@@ -99,13 +102,14 @@ def tell_technical_chapter(chapter_num: int, title: str, tech_explanation: str, 
 async def run_stateless_technical_walkthrough():
     server_script = os.path.join(os.path.dirname(__file__), "server.py")
     
+    env = {**os.environ}
+    if user_site:
+        env["PYTHONPATH"] = f"{user_site}:{os.environ.get('PYTHONPATH', '')}".strip(":")
+        
     server_params = StdioServerParameters(
         command=sys.executable,
         args=[server_script],
-        env={
-            **os.environ,
-            "PYTHONPATH": os.path.expanduser('~/.local/lib/python3.13/site-packages')
-        }
+        env=env
     )
 
     print("\n" + f"{BOLD}{CYAN}💻" * 38)

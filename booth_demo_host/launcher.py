@@ -18,6 +18,12 @@ import http.server
 import socketserver
 import threading
 
+import site
+
+user_site = site.getusersitepackages()
+if user_site and user_site not in sys.path:
+    sys.path.insert(0, user_site)
+
 # ANSI Colors
 CYAN = "\033[96m"
 GREEN = "\033[92m"
@@ -58,10 +64,12 @@ processes = []
 def launch_mcp_servers():
     print(f"\n{BOLD}{CYAN}🚀 Launching 4 Real MCP SSE Servers (No Mocking)...{RESET}\n")
     
+    env = {**os.environ}
+    if user_site:
+        env["PYTHONPATH"] = f"{user_site}:{os.environ.get('PYTHONPATH', '')}".strip(":")
+
     for s in SERVERS:
         cmd = [sys.executable, s["path"], "--sse", "--port", str(s["port"])]
-        env = {**os.environ, "PYTHONPATH": os.path.expanduser('~/.local/lib/python3.13/site-packages')}
-        
         proc = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         processes.append(proc)
         print(f"  {GREEN}✔ {s['name']}{RESET} -> SSE Endpoint: {BOLD}http://127.0.0.1:{s['port']}/sse{RESET}")

@@ -84,12 +84,12 @@ The interactive walkthrough script (`test_client.py`) uses color-coded output fo
 
 ## 🛠️ Key Handlers in `server.py`
 
-| Tool / Resource Handler | `_meta` Key Extracted | Server Code Location | Description |
+| Handler Name | `_meta` Key Extracted | Server Code Location | Description |
 | :--- | :--- | :--- | :--- |
-| `get_user_profile` | `client_id`, `user_id`, `auth_token` | [server.py](file:///usr/local/google/home/stenalpjolly/temp/demo/03_mcp_meta_context/server.py#L60-L90) | Validates user identity and returns profile without requiring credentials in tool parameters. |
-| `execute_tenant_query` | `tenant_id`, `trace_id` | [server.py](file:///usr/local/google/home/stenalpjolly/temp/demo/03_mcp_meta_context/server.py#L95-L125) | Restricts database execution strictly to `_meta.tenant_id`. |
-| `audit_system_access` | `trace_id`, `user_id` | [server.py](file:///usr/local/google/home/stenalpjolly/temp/demo/03_mcp_meta_context/server.py#L130-L145) | Appends audit trail entry tagged with caller's trace span ID. |
-| `audit://access_logs` | All `_meta` audit logs | [server.py](file:///usr/local/google/home/stenalpjolly/temp/demo/03_mcp_meta_context/server.py#L150-L158) | Resource returning full audit trail correlated by trace IDs. |
+| `get_user_profile` | `client_id`, `user_id`, `auth_token` | [server.py](./server.py#L60-L90) | Validates user identity and returns profile without requiring credentials in tool parameters. |
+| `execute_tenant_query` | `tenant_id`, `trace_id` | [server.py](./server.py#L95-L125) | Restricts database execution strictly to `_meta.tenant_id`. |
+| `audit_system_access` | `trace_id`, `user_id` | [server.py](./server.py#L130-L145) | Appends audit trail entry tagged with caller's trace span ID. |
+| `audit://access_logs` | All `_meta` audit logs | [server.py](./server.py#L150-L158) | Resource returning full audit trail correlated by trace IDs. |
 
 ---
 

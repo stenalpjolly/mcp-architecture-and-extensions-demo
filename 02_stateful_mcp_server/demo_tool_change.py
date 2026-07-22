@@ -9,7 +9,10 @@ import sys
 import os
 import asyncio
 
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python3.13/site-packages'))
+import site
+user_site = site.getusersitepackages()
+if user_site and user_site not in sys.path:
+    sys.path.insert(0, user_site)
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -18,13 +21,14 @@ from mcp.client.stdio import stdio_client
 async def run_tool_change_demo():
     server_script = os.path.join(os.path.dirname(__file__), "server.py")
     
+    env = {**os.environ}
+    if user_site:
+        env["PYTHONPATH"] = f"{user_site}:{os.environ.get('PYTHONPATH', '')}".strip(":")
+        
     server_params = StdioServerParameters(
         command=sys.executable,
         args=[server_script],
-        env={
-            **os.environ,
-            "PYTHONPATH": os.path.expanduser('~/.local/lib/python3.13/site-packages')
-        }
+        env=env
     )
 
     print("=" * 70)
