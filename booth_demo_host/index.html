@@ -521,6 +521,7 @@
 
             <!-- Connect Button -->
             <button class="btn btn-primary" id="btnConnect" onclick="toggleConnect()" data-agent="connect-btn">Connect Host RPC</button>
+            <button class="btn btn-secondary" id="btnReloadTools" onclick="reloadProtocolCapabilities()" data-agent="reload-tools-btn" title="Re-fetch tools/list, resources/list, and prompts/list over active connection">🔄 Reload Tools</button>
 
             <!-- Model Selection -->
             <select class="select-input" id="geminiModel" style="width: 160px;">
@@ -564,6 +565,7 @@
 
                 <!-- Material Action Chips -->
                 <div class="action-chips" id="actionChips">
+                    <div class="chip" onclick="reloadProtocolCapabilities()" title="Manually re-fetch tools/list over active connection session">🔄 Reload Tools/List</div>
                     <div class="chip" onclick="sendQuickPrompt('What tools and resources are available on this server?')">🔍 Discover Capabilities</div>
                     <div class="chip" onclick="sendQuickPrompt('generate_ui_chart with 20% and 50% and remaining')">📊 Dynamic UI Donut Chart</div>
                     <div class="chip" onclick="sendQuickPrompt('maps_geocode_toolset address: 1600 Amphitheatre Pkwy Mountain View CA')">🗺️ Maps Geocode Toolset</div>
@@ -841,6 +843,26 @@
             });
         }
 
+        async function reloadProtocolCapabilities() {
+            if (!isConnected || !postUrl) {
+                appendLog('log-err', 'RELOAD FAILED', 'Not connected to an active MCP RPC session. Connect first!');
+                return;
+            }
+            appendLog('log-info', 'MANUAL PROTOCOL REFRESH', 'Re-fetching tools/list, resources/list, and prompts/list...');
+
+            await sendRpcRequest('tools/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+            await sendRpcRequest('resources/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+            await sendRpcRequest('prompts/list', {
+                _meta: { client_id: 'client_booth_demo_01', user_id: 'user_stenalpjolly', tenant_id: 'tenant_acme_corp' }
+            });
+
+            appendLog('log-success', 'PROTOCOL DISCOVERY REFRESH COMPLETED', 'Discovered tools, resources, and prompts updated!');
+        }
+
         async function sendInitialize() {
             const initRes = await sendRpcRequest('initialize', {
                 protocolVersion: '2024-11-05',
@@ -888,6 +910,12 @@
             if (!isConnected) {
                 await connectSse();
                 await new Promise(r => setTimeout(r, 800));
+            }
+
+            if (text.toLowerCase().includes('reload tool') || text.toLowerCase().includes('refresh tool') || text.toLowerCase().includes('re-register')) {
+                await reloadProtocolCapabilities();
+                appendChatMessage('assistant', '🔄 Re-fetched live tools/list, resources/list, and prompts/list over active connection session. Discovered tools have been updated!');
+                return;
             }
 
             const apiKey = document.getElementById('geminiApiKey').value.trim();
