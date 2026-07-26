@@ -582,47 +582,72 @@
 
             <!-- Developer Protocol Inspector 2x2 Bento Grid View -->
             <div id="inspectorView" class="inspector-grid" style="display: none;">
-                <!-- Bento Card 1: Tools -->
+                <!-- Bento Card 1: Tools Workbench -->
                 <div class="surface-card">
                     <div class="card-header">
-                        <div class="card-title">📡 Discovered Tools</div>
-                        <button class="btn btn-secondary" onclick="copyInspectorJson('toolsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                        <div class="card-title">📡 Discovered Tools & Execution Workbench</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('toolsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy Schema JSON</button>
                     </div>
-                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                        <pre class="code-block" id="toolsDisplay">No connection initialized.</pre>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="inspectorToolSelect" class="select-input" onchange="loadSelectedToolPreset()" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;"></select>
+                            <button class="btn btn-primary" onclick="executeInspectorTool()" style="padding: 5px 12px; font-size: 0.78rem;">▶️ Execute Tool RPC</button>
+                        </div>
+                        <textarea id="inspectorToolArgs" class="code-block" style="height: 60px; font-family: var(--font-mono); font-size: 0.75rem; padding: 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);" placeholder='{"arg": "val"}'></textarea>
+                        <div style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600;">📥 Tool Execution Result:</div>
+                        <pre class="code-block" id="inspectorToolResult" style="max-height: 100px; font-size: 0.75rem; overflow-y: auto;">No tool executed yet.</pre>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Discovered Schema JSON:</div>
+                        <pre class="code-block" id="toolsDisplay" style="flex: 1; overflow-y: auto;">No connection initialized.</pre>
                     </div>
                 </div>
 
-                <!-- Bento Card 2: Resources -->
+                <!-- Bento Card 2: Resources Workbench -->
                 <div class="surface-card">
                     <div class="card-header">
-                        <div class="card-title">📄 Discovered Resources</div>
-                        <button class="btn btn-secondary" onclick="copyInspectorJson('resourcesDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                        <div class="card-title">📄 Discovered Resources & Reader Workbench</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('resourcesDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy Schema JSON</button>
                     </div>
-                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                        <pre class="code-block" id="resourcesDisplay">No connection initialized.</pre>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="inspectorResourceSelect" class="select-input" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;"></select>
+                            <button class="btn btn-primary" onclick="readInspectorResource()" style="padding: 5px 12px; font-size: 0.78rem;">📖 Read Resource RPC</button>
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600;">📥 Resource Contents:</div>
+                        <pre class="code-block" id="inspectorResourceResult" style="max-height: 120px; font-size: 0.75rem; overflow-y: auto;">No resource read yet.</pre>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Discovered Resources Schema JSON:</div>
+                        <pre class="code-block" id="resourcesDisplay" style="flex: 1; overflow-y: auto;">No connection initialized.</pre>
                     </div>
                 </div>
 
-                <!-- Bento Card 3: Prompts -->
+                <!-- Bento Card 3: Prompts Workbench -->
                 <div class="surface-card">
                     <div class="card-header">
-                        <div class="card-title">💡 Discovered Prompts</div>
-                        <button class="btn btn-secondary" onclick="copyInspectorJson('promptsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
+                        <div class="card-title">💡 Discovered Prompts Workbench</div>
+                        <button class="btn btn-secondary" onclick="copyInspectorJson('promptsDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy Schema JSON</button>
                     </div>
-                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                        <pre class="code-block" id="promptsDisplay">No connection initialized.</pre>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="inspectorPromptSelect" class="select-input" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;"></select>
+                            <button class="btn btn-primary" onclick="getInspectorPrompt()" style="padding: 5px 12px; font-size: 0.78rem;">💡 Get Prompt RPC</button>
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600;">📥 Prompt Template Result:</div>
+                        <pre class="code-block" id="inspectorPromptResult" style="max-height: 120px; font-size: 0.75rem; overflow-y: auto;">No prompt requested yet.</pre>
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Discovered Prompts Schema JSON:</div>
+                        <pre class="code-block" id="promptsDisplay" style="flex: 1; overflow-y: auto;">No connection initialized.</pre>
                     </div>
                 </div>
 
                 <!-- Bento Card 4: Capabilities -->
                 <div class="surface-card">
                     <div class="card-header">
-                        <div class="card-title">🔑 Client Capabilities</div>
+                        <div class="card-title">🔑 Client Capabilities & Host Telemetry</div>
                         <button class="btn btn-secondary" onclick="copyInspectorJson('capabilitiesDisplay')" style="padding: 3px 8px; font-size: 0.75rem;">📋 Copy JSON</button>
                     </div>
-                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                        <pre class="code-block" id="capabilitiesDisplay">No connection initialized.</pre>
+                    <div style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px;">
+                        <div style="font-size: 0.75rem; background: rgba(66,133,244,0.12); color: var(--accent-primary); padding: 8px; border-radius: var(--radius-sm); border: 1px solid rgba(66,133,244,0.25);">
+                            💡 <strong>Web Proxy Mode Active</strong>: Directly inspecting tools, resources, and prompts over single-port unified proxy (:8000). Zero CORS or localhost port-forwarding issues.
+                        </div>
+                        <pre class="code-block" id="capabilitiesDisplay" style="flex: 1; overflow-y: auto;">No connection initialized.</pre>
                     </div>
                 </div>
             </div>
@@ -896,7 +921,82 @@
             document.getElementById('toolsDisplay').innerHTML = highlightJsonHtml(discoveredTools);
             document.getElementById('resourcesDisplay').innerHTML = highlightJsonHtml(discoveredResources);
             document.getElementById('promptsDisplay').innerHTML = highlightJsonHtml(discoveredPrompts);
-            document.getElementById('capabilitiesDisplay').innerHTML = highlightJsonHtml({ protocolVersion: '2024-11-05', client: 'booth_demo_host' });
+            document.getElementById('capabilitiesDisplay').innerHTML = highlightJsonHtml({ protocolVersion: '2024-11-05', client: 'booth_demo_host', transport: 'unified_sse_rpc_proxy' });
+
+            // Populate Inspector Tools Dropdown
+            const toolSelect = document.getElementById('inspectorToolSelect');
+            toolSelect.innerHTML = discoveredTools.length 
+                ? discoveredTools.map(t => `<option value="${t.name}">${t.name}</option>`).join('')
+                : '<option value="">No tools discovered</option>';
+
+            // Populate Inspector Resources Dropdown
+            const resSelect = document.getElementById('inspectorResourceSelect');
+            resSelect.innerHTML = discoveredResources.length 
+                ? discoveredResources.map(r => `<option value="${r.uri}">${r.name || r.uri} (${r.uri})</option>`).join('')
+                : '<option value="">No resources discovered</option>';
+
+            // Populate Inspector Prompts Dropdown
+            const promptSelect = document.getElementById('inspectorPromptSelect');
+            promptSelect.innerHTML = discoveredPrompts.length 
+                ? discoveredPrompts.map(p => `<option value="${p.name}">${p.name}</option>`).join('')
+                : '<option value="">No prompts discovered</option>';
+
+            loadSelectedToolPreset();
+        }
+
+        function loadSelectedToolPreset() {
+            const toolName = document.getElementById('inspectorToolSelect').value;
+            const preset = DEMO_TOOL_PRESETS[toolName] || {};
+            document.getElementById('inspectorToolArgs').value = JSON.stringify(preset, null, 2);
+        }
+
+        async function executeInspectorTool() {
+            const toolName = document.getElementById('inspectorToolSelect').value;
+            if (!toolName) return alert("Select a tool first!");
+
+            let args = {};
+            try {
+                args = JSON.parse(document.getElementById('inspectorToolArgs').value);
+            } catch (e) {
+                return alert("Invalid JSON in Arguments: " + e.message);
+            }
+
+            document.getElementById('inspectorToolResult').innerHTML = "⏳ Executing tool RPC call...";
+
+            try {
+                const res = await sendRpcRequest('tools/call', { name: toolName, arguments: args });
+                document.getElementById('inspectorToolResult').innerHTML = highlightJsonHtml(res);
+            } catch (err) {
+                document.getElementById('inspectorToolResult').innerText = "Execution Error: " + err;
+            }
+        }
+
+        async function readInspectorResource() {
+            const uri = document.getElementById('inspectorResourceSelect').value;
+            if (!uri) return alert("Select a resource first!");
+
+            document.getElementById('inspectorResourceResult').innerHTML = "⏳ Reading resource RPC call...";
+
+            try {
+                const res = await sendRpcRequest('resources/read', { uri });
+                document.getElementById('inspectorResourceResult').innerHTML = highlightJsonHtml(res);
+            } catch (err) {
+                document.getElementById('inspectorResourceResult').innerText = "Resource Read Error: " + err;
+            }
+        }
+
+        async function getInspectorPrompt() {
+            const name = document.getElementById('inspectorPromptSelect').value;
+            if (!name) return alert("Select a prompt first!");
+
+            document.getElementById('inspectorPromptResult').innerHTML = "⏳ Requesting prompt RPC call...";
+
+            try {
+                const res = await sendRpcRequest('prompts/get', { name, arguments: { component: "database" } });
+                document.getElementById('inspectorPromptResult').innerHTML = highlightJsonHtml(res);
+            } catch (err) {
+                document.getElementById('inspectorPromptResult').innerText = "Prompt Error: " + err;
+            }
         }
 
         function sendQuickPrompt(text) {
