@@ -16,14 +16,9 @@ echo "Option 2: Launch Inspector in SSE mode (connects to running SSE server on 
 echo "  Command: CLIENT_PORT=5173 SERVER_PORT=3000 npx -y @modelcontextprotocol/inspector"
 echo ""
 
-if [ "$1" == "--sse" ]; then
-    echo "🚀 Starting SSE Server on Port 8006..."
-    python3 server.py --sse --port 8006 &
-    SERVER_PID=$!
-    sleep 1
-    echo "🔍 Launching Official MCP Inspector connected to http://127.0.0.1:8006/sse..."
-    npx -y @modelcontextprotocol/inspector --transport sse --url http://127.0.0.1:8006/sse
-    kill $SERVER_PID
+if [ "$1" == "--no-auth" ]; then
+    echo "🚀 Launching Official MCP Inspector with DANGEROUSLY_OMIT_AUTH=true..."
+    DANGEROUSLY_OMIT_AUTH=true npx -y @modelcontextprotocol/inspector python3 server.py
 else
     echo "🚀 Launching Official MCP Inspector in Stdio mode..."
     npx -y @modelcontextprotocol/inspector python3 server.py
