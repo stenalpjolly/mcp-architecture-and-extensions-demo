@@ -510,7 +510,8 @@
                 <option value="/api/demo2">📡 Demo 2: Stateful MCP Server</option>
                 <option value="/api/demo3">🔐 Demo 3: Request Metadata Server</option>
                 <option value="/api/demo4">🚀 Demo 4: Modern Spec Extensions & Apps</option>
-                <option value="/api/demo5" selected>🗺️ Demo 5: Remote Streamable MCP & ADK Toolsets</option>
+                <option value="/api/demo5">🗺️ Demo 5: Remote Streamable MCP & ADK Toolsets</option>
+                <option value="/api/demo6" selected>🔍 Demo 6: Official Model Context Protocol Inspector UI</option>
             </select>
 
             <!-- Status Badge -->
@@ -656,6 +657,10 @@
         let discoveredPrompts = [];
 
         const DEMO_TOOL_PRESETS = {
+            // Demo 6: Official MCP Inspector Target
+            inspect_system_metrics: {},
+            generate_inspector_card: { title: "System Diagnostics Report", severity: "info" },
+
             maps_geocode_toolset: { address: "1600 Amphitheatre Pkwy, Mountain View, CA" },
             maps_directions_toolset: { origin: "Mountain View, CA", destination: "San Francisco, CA", mode: "driving" },
             bigquery_query_toolset: { sql_query: "SELECT count(*) FROM `bigquery-public-data.usa_names.usa_1910_2013` LIMIT 10" },
