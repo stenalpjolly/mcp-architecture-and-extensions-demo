@@ -523,6 +523,7 @@
             <!-- Connect Button -->
             <button class="btn btn-primary" id="btnConnect" onclick="toggleConnect()" data-agent="connect-btn">Connect Host RPC</button>
             <button class="btn btn-secondary" id="btnReloadTools" onclick="reloadProtocolCapabilities()" data-agent="reload-tools-btn" title="Re-fetch tools/list, resources/list, and prompts/list over active connection">🔄 Reload Tools</button>
+            <button class="btn btn-secondary" onclick="showOfficialInspectorGuide()" style="font-size: 0.78rem;" title="View presenter setup guide for showcasing official MCP inspector">📺 Inspector Presenter Guide</button>
 
             <!-- Model Selection -->
             <select class="select-input" id="geminiModel" style="width: 160px;">
@@ -997,6 +998,18 @@
             } catch (err) {
                 document.getElementById('inspectorPromptResult').innerText = "Prompt Error: " + err;
             }
+        }
+
+        function showOfficialInspectorGuide() {
+            const guideText = "📺 HOW TO SHOWCASE THE OFFICIAL MCP INSPECTOR LIVE IN DEMOS:\\n\\n" +
+                "1️⃣ Launch Inspector on Remote Host/VM:\\n" +
+                "   npx -y @modelcontextprotocol/inspector python3 06_official_mcp_inspector/server.py\\n\\n" +
+                "2️⃣ Forward Ports 6274 & 6277 in your Local Terminal (Laptop/Mac):\\n" +
+                "   ssh -L 6274:localhost:6274 -L 6277:localhost:6277 stenalpjolly.c.googlers.com\\n\\n" +
+                "3️⃣ Open URL in Local Chrome Browser:\\n" +
+                "   http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=<TOKEN_FROM_STEP_1>\\n\\n" +
+                "💡 Alternatively, use our built-in ⚡ Developer Protocol Inspector tab above for direct web proxy testing!";
+            alert(guideText);
         }
 
         function sendQuickPrompt(text) {

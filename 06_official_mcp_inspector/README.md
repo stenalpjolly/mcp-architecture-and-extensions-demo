@@ -46,6 +46,37 @@ Alternatively, launch via the provided helper script:
 
 ---
 
+## 📺 Presenter Guide: Showcase Official Inspector Live
+
+When running your demo on a remote Googler VM, Cloud Workstation, or SSH host, Chrome cannot directly reach `http://localhost:6277` proxy backend because port 6277 is running on the remote host, leading to `net::ERR_CONNECTION_TIMED_OUT`.
+
+Follow these **2 simple steps** to showcase the official inspector live in Chrome:
+
+### Step 1: Launch Inspector on Remote Host
+Run the inspector command in your remote SSH session:
+```bash
+npx -y @modelcontextprotocol/inspector python3 06_official_mcp_inspector/server.py
+```
+> Outputs:
+> `🔍 MCP Inspector is up and running at http://127.0.0.1:6274 🚀`
+> `🔑 Session token: <TOKEN>`
+
+### Step 2: Forward Ports 6274 & 6277 to Local Machine
+In your **local terminal** (Mac/Linux/Windows), run SSH port forwarding for both ports (`6274` web UI + `6277` proxy backend):
+
+```bash
+ssh -L 6274:localhost:6274 -L 6277:localhost:6277 stenalpjolly.c.googlers.com
+```
+
+### Step 3: Open in Chrome
+Open the URL in Chrome on your laptop:
+```text
+http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=<TOKEN>
+```
+Now the official `@modelcontextprotocol/inspector` runs with 100% full functionality, zero connection errors, and live tool/resource testing!
+
+---
+
 ## 🛠️ Testing Features in Official MCP Inspector
 
 1. **Tools Tab**:
